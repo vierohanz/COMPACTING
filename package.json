@@ -1,0 +1,19 @@
+{
+  "name": "compacting",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently --kill-others --names web,api \"bun --cwd apps/web start\" \"dotnet run --project apps/api\"",
+    "build": "bun run --filter '*' build",
+    "lint": "oxlint .",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "oxlint": "^1.74.0",
+    "prettier": "^3.5.3",
+    "prettier-plugin-organize-imports": "^4.1.0"
+  }
+}
