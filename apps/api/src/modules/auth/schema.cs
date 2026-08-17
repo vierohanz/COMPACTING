@@ -23,17 +23,17 @@ public class RegisterRequest
     public string FullName { get; set; } = string.Empty;
 }
 
-public record AuthUserDto(
-    Guid Id,
-    string Email,
-    string FullName,
-    string Role,
-    DateTime CreatedAt
-);
+public class RefreshTokenRequest
+{
+    public string? RefreshToken { get; set; }
+}
 
-public record AuthResponseDto(
-    bool Success,
-    string Token,
+public record AuthUserDto(Guid Id, string Email, string FullName, string Role, DateTime CreatedAt);
+
+public record AuthDataDto(
+    string AccessToken,
+    int ExpiresInSeconds,
     AuthUserDto User,
-    string? Message = null
+    string? RefreshToken = null,
+    string TokenType = "Bearer"
 );

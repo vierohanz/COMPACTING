@@ -23,8 +23,4 @@ public record RecentCompressionItemDto(
     DateTime CreatedAt
 );
 
-public record FormatBreakdownDto(
-    string Format,
-    int Count,
-    long TotalBytesSaved
-);
+public record FormatBreakdownDto(string Format, int Count, long TotalBytesSaved);

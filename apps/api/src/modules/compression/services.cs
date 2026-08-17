@@ -47,7 +47,8 @@ public class CompressionService : ICompressionService
         CompressionOptionsDto options,
         Guid? apiKeyId = null,
         string? clientIp = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         var stopwatch = Stopwatch.StartNew();
         long originalSize = inputStream.Length;
@@ -57,7 +58,8 @@ public class CompressionService : ICompressionService
             inputStream.Position = 0;
         }
 
-        var sourceFormat = await Image.DetectFormatAsync(inputStream, cancellationToken) ?? WebpFormat.Instance;
+        var sourceFormat =
+            await Image.DetectFormatAsync(inputStream, cancellationToken) ?? WebpFormat.Instance;
         if (inputStream.CanSeek)
         {
             inputStream.Position = 0;
@@ -84,14 +86,17 @@ public class CompressionService : ICompressionService
                         ResizeModeOption.Pad => ResizeMode.Pad,
                         ResizeModeOption.Stretch => ResizeMode.Stretch,
                         ResizeModeOption.Max => ResizeMode.Max,
-                        _ => ResizeMode.Max
-                    }
+                        _ => ResizeMode.Max,
+                    },
                 };
 
                 image.Mutate(x => x.Resize(resizeOptions));
             }
 
-            var (encoder, targetExtension, contentType, targetFormatName) = ResolveEncoder(options, sourceFormat);
+            var (encoder, targetExtension, contentType, targetFormatName) = ResolveEncoder(
+                options,
+                sourceFormat
+            );
 
             using var outputStream = new MemoryStream();
             await image.SaveAsync(outputStream, encoder, cancellationToken);
@@ -100,9 +105,10 @@ public class CompressionService : ICompressionService
             stopwatch.Stop();
             long compressedSize = compressedBytes.Length;
             long bytesSaved = Math.Max(0, originalSize - compressedSize);
-            double ratioPercent = originalSize > 0
-                ? Math.Round((1.0 - ((double)compressedSize / originalSize)) * 100.0, 2)
-                : 0.0;
+            double ratioPercent =
+                originalSize > 0
+                    ? Math.Round((1.0 - ((double)compressedSize / originalSize)) * 100.0, 2)
+                    : 0.0;
 
             string targetFileName = Path.ChangeExtension(originalFileName, targetExtension);
 
@@ -138,14 +144,17 @@ public class CompressionService : ICompressionService
                     Width = image.Width,
                     Height = image.Height,
                     ClientIp = clientIp,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
                 };
 
                 _dbContext.CompressionLogs.Add(logEntry);
 
                 if (apiKeyId.HasValue)
                 {
-                    var apiKey = await _dbContext.ApiKeys.FindAsync(new object[] { apiKeyId.Value }, cancellationToken);
+                    var apiKey = await _dbContext.ApiKeys.FindAsync(
+                        new object[] { apiKeyId.Value },
+                        cancellationToken
+                    );
                     if (apiKey != null)
                     {
                         apiKey.TotalRequests++;
@@ -165,7 +174,7 @@ public class CompressionService : ICompressionService
                 Data = compressedBytes,
                 ContentType = contentType,
                 FileName = targetFileName,
-                Metadata = metadata
+                Metadata = metadata,
             };
         }
     }
@@ -175,7 +184,8 @@ public class CompressionService : ICompressionService
         CompressionOptionsDto options,
         Guid? apiKeyId = null,
         string? clientIp = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         var results = new List<CompressionProcessedFile>();
 
@@ -183,42 +193,54 @@ public class CompressionService : ICompressionService
         {
             try
             {
-                var processed = await CompressAsync(stream, fileName, options, apiKeyId, clientIp, cancellationToken);
+                var processed = await CompressAsync(
+                    stream,
+                    fileName,
+                    options,
+                    apiKeyId,
+                    clientIp,
+                    cancellationToken
+                );
                 results.Add(processed);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error compressing file {FileName} in batch", fileName);
-                results.Add(new CompressionProcessedFile
-                {
-                    Data = Array.Empty<byte>(),
-                    ContentType = "application/octet-stream",
-                    FileName = fileName,
-                    Metadata = new CompressionResultDto(
-                        Success: false,
-                        FileName: fileName,
-                        SourceFormat: "Unknown",
-                        TargetFormat: "Unknown",
-                        ContentType: "application/octet-stream",
-                        OriginalSizeBytes: stream.Length,
-                        CompressedSizeBytes: stream.Length,
-                        BytesSaved: 0,
-                        CompressionRatioPercent: 0,
-                        Width: 0,
-                        Height: 0,
-                        DurationMs: 0,
-                        ErrorMessage: ex.Message
-                    )
-                });
+                results.Add(
+                    new CompressionProcessedFile
+                    {
+                        Data = Array.Empty<byte>(),
+                        ContentType = "application/octet-stream",
+                        FileName = fileName,
+                        Metadata = new CompressionResultDto(
+                            Success: false,
+                            FileName: fileName,
+                            SourceFormat: "Unknown",
+                            TargetFormat: "Unknown",
+                            ContentType: "application/octet-stream",
+                            OriginalSizeBytes: stream.Length,
+                            CompressedSizeBytes: stream.Length,
+                            BytesSaved: 0,
+                            CompressionRatioPercent: 0,
+                            Width: 0,
+                            Height: 0,
+                            DurationMs: 0,
+                            ErrorMessage: ex.Message
+                        ),
+                    }
+                );
             }
         }
 
         return results;
     }
 
-    private (ImageEncoder Encoder, string Extension, string ContentType, string FormatName) ResolveEncoder(
-        CompressionOptionsDto options,
-        IImageFormat sourceFormat)
+    private (
+        ImageEncoder Encoder,
+        string Extension,
+        string ContentType,
+        string FormatName
+    ) ResolveEncoder(CompressionOptionsDto options, IImageFormat sourceFormat)
     {
         var target = options.Format;
         if (target == OutputFormat.Auto)
@@ -232,43 +254,29 @@ public class CompressionService : ICompressionService
                 new WebpEncoder
                 {
                     Quality = options.Quality,
-                    FileFormat = options.Lossless ? WebpFileFormatType.Lossless : WebpFileFormatType.Lossy,
-                    Method = WebpEncodingMethod.BestQuality
+                    FileFormat = options.Lossless
+                        ? WebpFileFormatType.Lossless
+                        : WebpFileFormatType.Lossy,
+                    Method = WebpEncodingMethod.BestQuality,
                 },
                 ".webp",
                 "image/webp",
                 "WebP"
             ),
             OutputFormat.Jpeg => (
-                new JpegEncoder
-                {
-                    Quality = options.Quality
-                },
+                new JpegEncoder { Quality = options.Quality },
                 ".jpg",
                 "image/jpeg",
                 "JPEG"
             ),
             OutputFormat.Png => (
-                new PngEncoder
-                {
-                    CompressionLevel = PngCompressionLevel.BestCompression
-                },
+                new PngEncoder { CompressionLevel = PngCompressionLevel.BestCompression },
                 ".png",
                 "image/png",
                 "PNG"
             ),
-            OutputFormat.Gif => (
-                new GifEncoder(),
-                ".gif",
-                "image/gif",
-                "GIF"
-            ),
-            _ => (
-                new WebpEncoder { Quality = options.Quality },
-                ".webp",
-                "image/webp",
-                "WebP"
-            )
+            OutputFormat.Gif => (new GifEncoder(), ".gif", "image/gif", "GIF"),
+            _ => (new WebpEncoder { Quality = options.Quality }, ".webp", "image/webp", "WebP"),
         };
     }
 }

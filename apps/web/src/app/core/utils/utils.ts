@@ -9,8 +9,6 @@ export function formatBytes(bytes: number): string {
 export function formatDate(dateString: string): string {
   const d = new Date(dateString);
   return (
-    d.toLocaleDateString() +
-    ' ' +
-    d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   );
 }

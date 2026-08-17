@@ -17,7 +17,10 @@ public class ApiKeyAuthMiddleware
     {
         string? apiKey = null;
 
-        if (context.Request.Headers.TryGetValue("X-API-Key", out var headerVal) && !string.IsNullOrWhiteSpace(headerVal))
+        if (
+            context.Request.Headers.TryGetValue("X-API-Key", out var headerVal)
+            && !string.IsNullOrWhiteSpace(headerVal)
+        )
         {
             apiKey = headerVal.ToString();
         }

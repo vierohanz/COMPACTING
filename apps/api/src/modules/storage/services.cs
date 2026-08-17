@@ -2,7 +2,12 @@ namespace Compacting.Api.Modules.Storage;
 
 public interface IStorageService
 {
-    Task<StoredFileDto> SaveTemporaryFileAsync(byte[] data, string fileName, string contentType, CancellationToken cancellationToken = default);
+    Task<StoredFileDto> SaveTemporaryFileAsync(
+        byte[] data,
+        string fileName,
+        string contentType,
+        CancellationToken cancellationToken = default
+    );
     Task<byte[]?> GetFileAsync(string fileId, CancellationToken cancellationToken = default);
     Task CleanupOldFilesAsync(TimeSpan olderThan, CancellationToken cancellationToken = default);
 }
@@ -19,7 +24,12 @@ public class LocalStorageService : IStorageService
         Directory.CreateDirectory(_storageDirectory);
     }
 
-    public async Task<StoredFileDto> SaveTemporaryFileAsync(byte[] data, string fileName, string contentType, CancellationToken cancellationToken = default)
+    public async Task<StoredFileDto> SaveTemporaryFileAsync(
+        byte[] data,
+        string fileName,
+        string contentType,
+        CancellationToken cancellationToken = default
+    )
     {
         string fileId = Guid.NewGuid().ToString("N");
         string safeFileName = $"{fileId}_{Path.GetFileName(fileName)}";
@@ -37,15 +47,22 @@ public class LocalStorageService : IStorageService
         );
     }
 
-    public async Task<byte[]?> GetFileAsync(string fileId, CancellationToken cancellationToken = default)
+    public async Task<byte[]?> GetFileAsync(
+        string fileId,
+        CancellationToken cancellationToken = default
+    )
     {
         var files = Directory.GetFiles(_storageDirectory, $"{fileId}_*");
-        if (files.Length == 0) return null;
+        if (files.Length == 0)
+            return null;
 
         return await File.ReadAllBytesAsync(files[0], cancellationToken);
     }
 
-    public Task CleanupOldFilesAsync(TimeSpan olderThan, CancellationToken cancellationToken = default)
+    public Task CleanupOldFilesAsync(
+        TimeSpan olderThan,
+        CancellationToken cancellationToken = default
+    )
     {
         try
         {

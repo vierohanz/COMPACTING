@@ -7,9 +7,16 @@ public static class SecurityUtil
 {
     public static string HashSha256(string input)
     {
-        if (string.IsNullOrEmpty(input)) return string.Empty;
+        if (string.IsNullOrEmpty(input))
+            return string.Empty;
         byte[] bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input.Trim()));
         return Convert.ToHexString(bytes).ToLowerInvariant();
+    }
+
+    public static string GenerateSecureRandomString(int byteCount = 64)
+    {
+        byte[] randomBytes = RandomNumberGenerator.GetBytes(byteCount);
+        return Convert.ToBase64String(randomBytes).Replace("+", "-").Replace("/", "_").TrimEnd('=');
     }
 
     public static (string RawKey, string KeyPrefix, string KeyHash) GenerateApiKey()

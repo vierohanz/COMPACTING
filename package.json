@@ -2,18 +2,25 @@
   "name": "compacting",
   "private": true,
   "workspaces": [
-    "apps/*"
+    "apps/web"
   ],
   "scripts": {
-    "dev": "concurrently --kill-others --names web,api \"bun --cwd apps/web start\" \"dotnet run --project apps/api\"",
+    "dev": "concurrently --kill-others --names web,api \"bun --cwd apps/web start\" \"dotnet watch --project apps/api\"",
     "build": "bun run --filter '*' build",
-    "lint": "oxlint .",
-    "format": "prettier --write ."
+    "lint": "oxlint apps/web/src",
+    "lint:api": "dotnet build apps/api --no-incremental",
+    "format": "prettier --write apps/web && csharpier format apps/api/src",
+    "format:web": "prettier --write apps/web",
+    "format:api": "csharpier format apps/api/src"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "autoprefixer": "^10.5.4",
     "concurrently": "^9.1.2",
     "oxlint": "^1.74.0",
+    "postcss": "^8.5.26",
     "prettier": "^3.5.3",
-    "prettier-plugin-organize-imports": "^4.1.0"
+    "prettier-plugin-organize-imports": "^4.1.0",
+    "tailwindcss": "^4.3.3"
   }
 }

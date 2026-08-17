@@ -8,7 +8,7 @@ public enum OutputFormat
     WebP,
     Jpeg,
     Png,
-    Gif
+    Gif,
 }
 
 public enum ResizeModeOption
@@ -17,7 +17,7 @@ public enum ResizeModeOption
     Max,
     Crop,
     Pad,
-    Stretch
+    Stretch,
 }
 
 public class CompressionOptionsDto

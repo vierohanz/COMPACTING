@@ -9,7 +9,10 @@ public class CompressionController : ControllerBase
     private readonly ICompressionService _compressionService;
     private readonly ILogger<CompressionController> _logger;
 
-    public CompressionController(ICompressionService compressionService, ILogger<CompressionController> logger)
+    public CompressionController(
+        ICompressionService compressionService,
+        ILogger<CompressionController> logger
+    )
     {
         _compressionService = compressionService;
         _logger = logger;
@@ -26,7 +29,8 @@ public class CompressionController : ControllerBase
         IFormFile file,
         [FromQuery] CompressionOptionsDto options,
         [FromQuery] bool? json = false,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         if (file == null || file.Length == 0)
         {
@@ -34,12 +38,27 @@ public class CompressionController : ControllerBase
         }
 
         var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-        Guid? apiKeyId = HttpContext.Items.TryGetValue("ApiKeyId", out var idObj) && idObj is Guid keyId ? keyId : null;
+        Guid? apiKeyId =
+            HttpContext.Items.TryGetValue("ApiKeyId", out var idObj) && idObj is Guid keyId
+                ? keyId
+                : null;
 
         await using var stream = file.OpenReadStream();
-        var processed = await _compressionService.CompressAsync(stream, file.FileName, options, apiKeyId, clientIp, cancellationToken);
+        var processed = await _compressionService.CompressAsync(
+            stream,
+            file.FileName,
+            options,
+            apiKeyId,
+            clientIp,
+            cancellationToken
+        );
 
-        bool prefersJson = (json == true) || (Request.Headers.Accept.ToString().Contains("application/json") && options.ReturnBase64);
+        bool prefersJson =
+            (json == true)
+            || (
+                Request.Headers.Accept.ToString().Contains("application/json")
+                && options.ReturnBase64
+            );
 
         if (prefersJson)
         {
@@ -47,9 +66,15 @@ public class CompressionController : ControllerBase
         }
 
         Response.Headers.Append("X-Original-Size", processed.Metadata.OriginalSizeBytes.ToString());
-        Response.Headers.Append("X-Compressed-Size", processed.Metadata.CompressedSizeBytes.ToString());
+        Response.Headers.Append(
+            "X-Compressed-Size",
+            processed.Metadata.CompressedSizeBytes.ToString()
+        );
         Response.Headers.Append("X-Bytes-Saved", processed.Metadata.BytesSaved.ToString());
-        Response.Headers.Append("X-Compression-Ratio", $"{processed.Metadata.CompressionRatioPercent}%");
+        Response.Headers.Append(
+            "X-Compression-Ratio",
+            $"{processed.Metadata.CompressionRatioPercent}%"
+        );
         Response.Headers.Append("X-Duration-Ms", processed.Metadata.DurationMs.ToString());
 
         return File(processed.Data, processed.ContentType, processed.FileName);
@@ -64,7 +89,8 @@ public class CompressionController : ControllerBase
     public async Task<IActionResult> CompressSingleJson(
         IFormFile file,
         [FromQuery] CompressionOptionsDto options,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         if (file == null || file.Length == 0)
         {
@@ -73,10 +99,20 @@ public class CompressionController : ControllerBase
 
         options.ReturnBase64 = true;
         var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-        Guid? apiKeyId = HttpContext.Items.TryGetValue("ApiKeyId", out var idObj) && idObj is Guid keyId ? keyId : null;
+        Guid? apiKeyId =
+            HttpContext.Items.TryGetValue("ApiKeyId", out var idObj) && idObj is Guid keyId
+                ? keyId
+                : null;
 
         await using var stream = file.OpenReadStream();
-        var processed = await _compressionService.CompressAsync(stream, file.FileName, options, apiKeyId, clientIp, cancellationToken);
+        var processed = await _compressionService.CompressAsync(
+            stream,
+            file.FileName,
+            options,
+            apiKeyId,
+            clientIp,
+            cancellationToken
+        );
 
         return Ok(processed.Metadata);
     }
@@ -90,7 +126,8 @@ public class CompressionController : ControllerBase
     public async Task<IActionResult> CompressBatch(
         [FromForm] List<IFormFile> files,
         [FromQuery] CompressionOptionsDto options,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         if (files == null || files.Count == 0)
         {
@@ -99,7 +136,10 @@ public class CompressionController : ControllerBase
 
         options.ReturnBase64 = true;
         var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-        Guid? apiKeyId = HttpContext.Items.TryGetValue("ApiKeyId", out var idObj) && idObj is Guid keyId ? keyId : null;
+        Guid? apiKeyId =
+            HttpContext.Items.TryGetValue("ApiKeyId", out var idObj) && idObj is Guid keyId
+                ? keyId
+                : null;
 
         var streams = new List<(Stream Stream, string FileName)>();
         foreach (var file in files)
@@ -107,7 +147,13 @@ public class CompressionController : ControllerBase
             streams.Add((file.OpenReadStream(), file.FileName));
         }
 
-        var results = await _compressionService.CompressBatchAsync(streams, options, apiKeyId, clientIp, cancellationToken);
+        var results = await _compressionService.CompressBatchAsync(
+            streams,
+            options,
+            apiKeyId,
+            clientIp,
+            cancellationToken
+        );
 
         foreach (var (stream, _) in streams)
         {

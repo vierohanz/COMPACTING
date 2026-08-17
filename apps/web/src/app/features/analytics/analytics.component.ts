@@ -8,16 +8,26 @@ import { formatBytes } from '../../core/utils/utils';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <section class="analytics-layout">
-      <div class="stats-row">
-        <div class="stat-card glass-panel">
-          <div class="stat-icon emerald-bg">
+    <section class="space-y-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div
+          class="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs flex items-center justify-between"
+        >
+          <div class="space-y-1">
+            <span class="text-xs font-medium text-slate-500">Total Images Compressed</span>
+            <h3 class="text-2xl font-bold font-mono tracking-tight text-slate-900">
+              {{ store.summary()?.totalImagesCompressed || 0 | number }}
+            </h3>
+          </div>
+          <div
+            class="w-10 h-10 rounded-lg bg-pink-50 border border-pink-200/80 flex items-center justify-center text-pink-600 shadow-xs"
+          >
             <svg
-              width="24"
-              height="24"
+              width="20"
+              height="20"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#10B981"
+              stroke="currentColor"
               stroke-width="2"
             >
               <path
@@ -25,119 +35,137 @@ import { formatBytes } from '../../core/utils/utils';
               />
             </svg>
           </div>
-          <div class="stat-info">
-            <span class="stat-label">Total Images Compressed</span>
-            <h3 class="stat-number">
-              {{ store.summary()?.totalImagesCompressed || 0 | number }}
-            </h3>
-          </div>
         </div>
 
-        <div class="stat-card glass-panel">
-          <div class="stat-icon cyan-bg">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#06B6D4"
-              stroke-width="2"
-            >
-              <path
-                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"
-              />
-            </svg>
-          </div>
-          <div class="stat-info">
-            <span class="stat-label">Total Bandwidth Saved</span>
-            <h3 class="stat-number text-green">
+        <div
+          class="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs flex items-center justify-between"
+        >
+          <div class="space-y-1">
+            <span class="text-xs font-medium text-slate-500">Total Bandwidth Saved</span>
+            <h3 class="text-2xl font-bold font-mono tracking-tight text-pink-600">
               {{ formatBytes(store.summary()?.totalBytesSaved || 0) }}
             </h3>
           </div>
-        </div>
-
-        <div class="stat-card glass-panel">
-          <div class="stat-icon indigo-bg">
+          <div
+            class="w-10 h-10 rounded-lg bg-pink-600 text-white flex items-center justify-center shadow-xs"
+          >
             <svg
-              width="24"
-              height="24"
+              width="20"
+              height="20"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#6366F1"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+            </svg>
+          </div>
+        </div>
+
+        <div
+          class="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs flex items-center justify-between"
+        >
+          <div class="space-y-1">
+            <span class="text-xs font-medium text-slate-500">Average Reduction</span>
+            <h3 class="text-2xl font-bold font-mono tracking-tight text-slate-900">
+              {{ store.summary()?.averageSavingsPercentage || 0 }}%
+            </h3>
+          </div>
+          <div
+            class="w-10 h-10 rounded-lg bg-pink-50 border border-pink-200/80 flex items-center justify-center text-pink-600 shadow-xs"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
               stroke-width="2"
             >
               <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
             </svg>
           </div>
-          <div class="stat-info">
-            <span class="stat-label">Average Reduction</span>
-            <h3 class="stat-number">
-              {{ store.summary()?.averageSavingsPercentage || 0 }}%
-            </h3>
-          </div>
         </div>
 
-        <div class="stat-card glass-panel">
-          <div class="stat-icon amber-bg">
+        <div
+          class="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs flex items-center justify-between"
+        >
+          <div class="space-y-1">
+            <span class="text-xs font-medium text-slate-500">Average Engine Latency</span>
+            <h3 class="text-2xl font-bold font-mono tracking-tight text-slate-900">
+              {{ store.summary()?.averageDurationMs || 0 }} ms
+            </h3>
+          </div>
+          <div
+            class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 shadow-xs"
+          >
             <svg
-              width="24"
-              height="24"
+              width="20"
+              height="20"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#F59E0B"
+              stroke="currentColor"
               stroke-width="2"
             >
               <circle cx="12" cy="12" r="10" />
               <path d="M12 6v6l4 2" />
             </svg>
           </div>
-          <div class="stat-info">
-            <span class="stat-label">Average Engine Latency</span>
-            <h3 class="stat-number">
-              {{ store.summary()?.averageDurationMs || 0 }} ms
-            </h3>
-          </div>
         </div>
       </div>
 
-      <div class="glass-panel recent-table-card">
-        <div class="panel-header">
-          <h2>Recent Compression Events</h2>
-        </div>
+      <div class="rounded-xl border border-slate-200/80 bg-white shadow-xs p-6 space-y-4">
+        <h2 class="text-base font-semibold tracking-tight text-slate-900">
+          Recent Compression Events
+        </h2>
 
-        <div class="table-responsive">
-          <table class="custom-table">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
             <thead>
-              <tr>
-                <th>File Name</th>
-                <th>Source</th>
-                <th>Target</th>
-                <th>Original</th>
-                <th>Compressed</th>
-                <th>Savings</th>
-                <th>Latency</th>
-                <th>Timestamp</th>
+              <tr class="border-b border-slate-200 text-slate-500 font-medium">
+                <th class="h-9 px-4">File Name</th>
+                <th class="h-9 px-4">Source</th>
+                <th class="h-9 px-4">Target</th>
+                <th class="h-9 px-4">Original</th>
+                <th class="h-9 px-4">Compressed</th>
+                <th class="h-9 px-4">Savings</th>
+                <th class="h-9 px-4">Latency</th>
+                <th class="h-9 px-4">Timestamp</th>
               </tr>
             </thead>
-            <tbody>
-              <tr *ngFor="let item of store.recentCompressions()">
-                <td class="font-bold">{{ item.fileName }}</td>
-                <td>
-                  <span class="format-pill">{{ item.sourceFormat }}</span>
+            <tbody class="divide-y divide-slate-100">
+              <tr
+                *ngFor="let item of store.recentCompressions()"
+                class="hover:bg-slate-50/70 transition-colors"
+              >
+                <td class="py-3 px-4 font-semibold text-slate-900">
+                  {{ item.fileName }}
                 </td>
-                <td>
-                  <span class="format-pill highlight">{{
-                    item.targetFormat
-                  }}</span>
+                <td class="py-3 px-4 text-slate-600">
+                  {{ item.sourceFormat }}
                 </td>
-                <td>{{ formatBytes(item.originalSizeBytes) }}</td>
-                <td>{{ formatBytes(item.compressedSizeBytes) }}</td>
-                <td class="text-green">-{{ item.compressionRatioPercent }}%</td>
-                <td>{{ item.durationMs }} ms</td>
-                <td>{{ item.createdAt | date: 'shortTime' }}</td>
+                <td class="py-3 px-4">
+                  <span
+                    class="inline-flex items-center rounded-md border border-pink-200 bg-pink-50 px-2 py-0.5 font-semibold text-pink-700"
+                    >{{ item.targetFormat }}</span
+                  >
+                </td>
+                <td class="py-3 px-4 text-slate-600">
+                  {{ formatBytes(item.originalSizeBytes) }}
+                </td>
+                <td class="py-3 px-4 text-slate-600">
+                  {{ formatBytes(item.compressedSizeBytes) }}
+                </td>
+                <td class="py-3 px-4 font-semibold text-pink-600">
+                  -{{ item.compressionRatioPercent }}%
+                </td>
+                <td class="py-3 px-4 text-slate-600">{{ item.durationMs }} ms</td>
+                <td class="py-3 px-4 text-slate-400">
+                  {{ item.createdAt | date: 'shortTime' }}
+                </td>
               </tr>
               <tr *ngIf="store.recentCompressions().length === 0">
-                <td colspan="8" class="text-center py-4 text-muted">
+                <td colspan="8" class="text-center py-6 text-slate-400">
                   No recent compression events recorded yet.
                 </td>
               </tr>
@@ -146,111 +174,7 @@ import { formatBytes } from '../../core/utils/utils';
         </div>
       </div>
     </section>
-  `,
-  styles: [
-    `
-      .analytics-layout {
-        display: flex;
-        flex-direction: column;
-        gap: 24px;
-      }
-      .stats-row {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 16px;
-      }
-      @media (max-width: 1024px) {
-        .stats-row {
-          grid-template-columns: repeat(2, 1fr);
-        }
-      }
-      .stat-card {
-        padding: 20px;
-        display: flex;
-        align-items: center;
-        gap: 16px;
-      }
-      .stat-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: var(--radius-md);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .emerald-bg {
-        background: rgba(16, 185, 129, 0.12);
-        border: 1px solid rgba(16, 185, 129, 0.3);
-      }
-      .cyan-bg {
-        background: rgba(6, 182, 212, 0.12);
-        border: 1px solid rgba(6, 182, 212, 0.3);
-      }
-      .indigo-bg {
-        background: rgba(99, 102, 241, 0.12);
-        border: 1px solid rgba(99, 102, 241, 0.3);
-      }
-      .amber-bg {
-        background: rgba(245, 158, 11, 0.12);
-        border: 1px solid rgba(245, 158, 11, 0.3);
-      }
-      .stat-label {
-        font-size: 0.8rem;
-        color: var(--text-muted);
-        font-weight: 500;
-        display: block;
-      }
-      .stat-number {
-        font-size: 1.4rem;
-        font-weight: 800;
-        font-family: var(--font-mono);
-      }
-      .recent-table-card {
-        padding: 24px;
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
-      }
-      .table-responsive {
-        overflow-x: auto;
-      }
-      .custom-table {
-        width: 100%;
-        border-collapse: collapse;
-        text-align: left;
-      }
-      .custom-table th {
-        padding: 12px 16px;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: var(--text-muted);
-        border-bottom: 1px solid var(--border-subtle);
-      }
-      .custom-table td {
-        padding: 14px 16px;
-        font-size: 0.875rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-      }
-      .format-pill {
-        padding: 3px 8px;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        background: var(--bg-surface-elevated);
-      }
-      .format-pill.highlight {
-        background: rgba(16, 185, 129, 0.2);
-        color: #34d399;
-      }
-      .text-green {
-        color: #34d399;
-      }
-      .font-bold {
-        font-weight: 600;
-      }
-    `
-  ]
+  `
 })
 export class AnalyticsComponent {
   store = inject(CompressionStore);

@@ -1,57 +1,15 @@
-using System;
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Compacting.Api.Db;
 
-public class UserEntity
-{
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public string Email { get; set; } = string.Empty;
-    public string PasswordHash { get; set; } = string.Empty;
-    public string FullName { get; set; } = string.Empty;
-    public string Role { get; set; } = "Admin";
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-}
-
-public class ApiKeyEntity
-{
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public string Name { get; set; } = string.Empty;
-    public string KeyPrefix { get; set; } = string.Empty; // e.g. "cmp_live_abc123"
-    public string KeyHash { get; set; } = string.Empty;   // SHA256 hashed secret key
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime? ExpiresAt { get; set; }
-    public bool IsRevoked { get; set; } = false;
-    public int RateLimitPerMin { get; set; } = 120;
-    public long TotalRequests { get; set; } = 0;
-    public long TotalBytesSaved { get; set; } = 0;
-}
-
-public class CompressionLogEntity
-{
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public Guid? ApiKeyId { get; set; }
-    public string OriginalFileName { get; set; } = string.Empty;
-    public string SourceFormat { get; set; } = string.Empty;
-    public string TargetFormat { get; set; } = string.Empty;
-    public long OriginalSizeBytes { get; set; }
-    public long CompressedSizeBytes { get; set; }
-    public long BytesSaved { get; set; }
-    public double CompressionRatioPercent { get; set; }
-    public int DurationMs { get; set; }
-    public int Width { get; set; }
-    public int Height { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public string? ClientIp { get; set; }
-}
-
 public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-    {
-    }
+    public AppDbContext(DbContextOptions<AppDbContext> options)
+        : base(options) { }
 
     public DbSet<UserEntity> Users => Set<UserEntity>();
+    public DbSet<RefreshTokenEntity> RefreshTokens => Set<RefreshTokenEntity>();
     public DbSet<ApiKeyEntity> ApiKeys => Set<ApiKeyEntity>();
     public DbSet<CompressionLogEntity> CompressionLogs => Set<CompressionLogEntity>();
 
@@ -61,12 +19,24 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<UserEntity>(entity =>
         {
+            entity.ToTable("users");
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Email).IsUnique();
         });
 
+        modelBuilder.Entity<RefreshTokenEntity>(entity =>
+        {
+            entity.ToTable("refresh_tokens");
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.TokenHash).IsUnique();
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.ExpiresAt);
+            entity.HasIndex(e => e.IsRevoked);
+        });
+
         modelBuilder.Entity<ApiKeyEntity>(entity =>
         {
+            entity.ToTable("api_keys");
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.KeyHash);
             entity.HasIndex(e => e.KeyPrefix);
@@ -74,9 +44,48 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<CompressionLogEntity>(entity =>
         {
+            entity.ToTable("compression_logs");
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.CreatedAt);
             entity.HasIndex(e => e.ApiKeyId);
         });
+
+        foreach (var entity in modelBuilder.Model.GetEntityTypes())
+        {
+            var tableName = entity.GetTableName();
+            if (!string.IsNullOrEmpty(tableName))
+            {
+                entity.SetTableName(ToSnakeCase(tableName.Replace("Entity", "")));
+            }
+
+            foreach (var property in entity.GetProperties())
+            {
+                property.SetColumnName(ToSnakeCase(property.Name));
+            }
+
+            foreach (var key in entity.GetKeys())
+            {
+                key.SetName(ToSnakeCase(key.GetName()!));
+            }
+
+            foreach (var foreignKey in entity.GetForeignKeys())
+            {
+                foreignKey.SetConstraintName(ToSnakeCase(foreignKey.GetConstraintName()!));
+            }
+
+            foreach (var index in entity.GetIndexes())
+            {
+                index.SetDatabaseName(ToSnakeCase(index.GetDatabaseName()!));
+            }
+        }
+    }
+
+    private static string ToSnakeCase(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return input;
+        return Regex
+            .Replace(input, @"([a-z0-9])([A-Z])", "$1_$2", RegexOptions.Compiled)
+            .ToLowerInvariant();
     }
 }

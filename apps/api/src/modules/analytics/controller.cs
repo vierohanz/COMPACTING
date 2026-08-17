@@ -29,7 +29,10 @@ public class AnalyticsController : ControllerBase
     /// </summary>
     [HttpGet("recent")]
     [ProducesResponseType(typeof(List<RecentCompressionItemDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetRecent([FromQuery] int limit = 20, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetRecent(
+        [FromQuery] int limit = 20,
+        CancellationToken cancellationToken = default
+    )
     {
         var recent = await _analyticsService.GetRecentCompressionsAsync(limit, cancellationToken);
         return Ok(recent);

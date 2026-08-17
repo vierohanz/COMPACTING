@@ -7,9 +7,15 @@ namespace Compacting.Api.Modules.ApiKeys;
 public interface IApiKeyService
 {
     Task<List<ApiKeyDto>> GetAllKeysAsync(CancellationToken cancellationToken = default);
-    Task<ApiKeyCreatedResponseDto> CreateKeyAsync(CreateApiKeyRequest request, CancellationToken cancellationToken = default);
+    Task<ApiKeyCreatedResponseDto> CreateKeyAsync(
+        CreateApiKeyRequest request,
+        CancellationToken cancellationToken = default
+    );
     Task<bool> RevokeKeyAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<ApiKeyEntity?> ValidateKeyAsync(string rawApiKey, CancellationToken cancellationToken = default);
+    Task<ApiKeyEntity?> ValidateKeyAsync(
+        string rawApiKey,
+        CancellationToken cancellationToken = default
+    );
 }
 
 public class ApiKeyService : IApiKeyService
@@ -23,26 +29,32 @@ public class ApiKeyService : IApiKeyService
         _logger = logger;
     }
 
-    public async Task<List<ApiKeyDto>> GetAllKeysAsync(CancellationToken cancellationToken = default)
+    public async Task<List<ApiKeyDto>> GetAllKeysAsync(
+        CancellationToken cancellationToken = default
+    )
     {
-        var keys = await _dbContext.ApiKeys
-            .OrderByDescending(k => k.CreatedAt)
+        var keys = await _dbContext
+            .ApiKeys.OrderByDescending(k => k.CreatedAt)
             .ToListAsync(cancellationToken);
 
         return keys.Select(k => new ApiKeyDto(
-            k.Id,
-            k.Name,
-            k.KeyPrefix,
-            k.CreatedAt,
-            k.ExpiresAt,
-            k.IsRevoked,
-            k.RateLimitPerMin,
-            k.TotalRequests,
-            k.TotalBytesSaved
-        )).ToList();
+                k.Id,
+                k.Name,
+                k.KeyPrefix,
+                k.CreatedAt,
+                k.ExpiresAt,
+                k.IsRevoked,
+                k.RateLimitPerMin,
+                k.TotalRequests,
+                k.TotalBytesSaved
+            ))
+            .ToList();
     }
 
-    public async Task<ApiKeyCreatedResponseDto> CreateKeyAsync(CreateApiKeyRequest request, CancellationToken cancellationToken = default)
+    public async Task<ApiKeyCreatedResponseDto> CreateKeyAsync(
+        CreateApiKeyRequest request,
+        CancellationToken cancellationToken = default
+    )
     {
         var (rawApiKey, keyPrefix, keyHash) = SecurityUtil.GenerateApiKey();
 
@@ -58,7 +70,7 @@ public class ApiKeyService : IApiKeyService
             CreatedAt = DateTime.UtcNow,
             ExpiresAt = expiresAt,
             RateLimitPerMin = request.RateLimitPerMin,
-            IsRevoked = false
+            IsRevoked = false,
         };
 
         _dbContext.ApiKeys.Add(entity);
@@ -78,23 +90,29 @@ public class ApiKeyService : IApiKeyService
     public async Task<bool> RevokeKeyAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var key = await _dbContext.ApiKeys.FindAsync(new object[] { id }, cancellationToken);
-        if (key == null) return false;
+        if (key == null)
+            return false;
 
         key.IsRevoked = true;
         await _dbContext.SaveChangesAsync(cancellationToken);
         return true;
     }
 
-    public async Task<ApiKeyEntity?> ValidateKeyAsync(string rawApiKey, CancellationToken cancellationToken = default)
+    public async Task<ApiKeyEntity?> ValidateKeyAsync(
+        string rawApiKey,
+        CancellationToken cancellationToken = default
+    )
     {
-        if (string.IsNullOrWhiteSpace(rawApiKey)) return null;
+        if (string.IsNullOrWhiteSpace(rawApiKey))
+            return null;
 
         string keyHash = SecurityUtil.HashSha256(rawApiKey.Trim());
-        var key = await _dbContext.ApiKeys
-            .AsNoTracking()
+        var key = await _dbContext
+            .ApiKeys.AsNoTracking()
             .FirstOrDefaultAsync(k => k.KeyHash == keyHash && !k.IsRevoked, cancellationToken);
 
-        if (key == null) return null;
+        if (key == null)
+            return null;
 
         if (key.ExpiresAt.HasValue && key.ExpiresAt.Value < DateTime.UtcNow)
         {

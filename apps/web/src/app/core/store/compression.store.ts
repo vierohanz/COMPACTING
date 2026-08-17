@@ -5,10 +5,7 @@ import {
   RecentCompressionItem
 } from '../../shared/models/analytics.model';
 import { ApiKeyDto } from '../../shared/models/api-key.model';
-import {
-  CompressionOptions,
-  CompressionResult
-} from '../../shared/models/compression.model';
+import { CompressionOptions, CompressionResult } from '../../shared/models/compression.model';
 import { NavigationTab } from '../config/navigation.config';
 import { ApiService } from '../services/api.service';
 
@@ -98,13 +95,11 @@ export class CompressionStore {
 
     this.isCompressing.set(true);
     this.api.compressImage(file, options).subscribe({
-      next: (res) => {
+      next: res => {
         this.isCompressing.set(false);
         this.compressionResult.set(res);
         if (res.base64Data) {
-          this.previewCompressedUrl.set(
-            `data:${res.contentType};base64,${res.base64Data}`
-          );
+          this.previewCompressedUrl.set(`data:${res.contentType};base64,${res.base64Data}`);
         }
         this.loadAnalytics();
       },
@@ -116,23 +111,21 @@ export class CompressionStore {
 
   loadApiKeys() {
     this.api.getApiKeys().subscribe({
-      next: (keys) => this.apiKeys.set(keys)
+      next: keys => this.apiKeys.set(keys)
     });
   }
 
   createKey(name: string, rateLimit = 120, expiresInDays?: number) {
     if (!name.trim()) return;
     this.isCreatingKey.set(true);
-    this.api
-      .createApiKey({ name, rateLimitPerMin: rateLimit, expiresInDays })
-      .subscribe({
-        next: (res) => {
-          this.isCreatingKey.set(false);
-          this.createdKeySecret.set(res.rawApiKey);
-          this.loadApiKeys();
-        },
-        error: () => this.isCreatingKey.set(false)
-      });
+    this.api.createApiKey({ name, rateLimitPerMin: rateLimit, expiresInDays }).subscribe({
+      next: res => {
+        this.isCreatingKey.set(false);
+        this.createdKeySecret.set(res.rawApiKey);
+        this.loadApiKeys();
+      },
+      error: () => this.isCreatingKey.set(false)
+    });
   }
 
   revokeKey(id: string) {
@@ -143,13 +136,13 @@ export class CompressionStore {
 
   loadAnalytics() {
     this.api.getAnalyticsSummary().subscribe({
-      next: (data) => this.summary.set(data)
+      next: data => this.summary.set(data)
     });
     this.api.getRecentCompressions().subscribe({
-      next: (data) => this.recentCompressions.set(data)
+      next: data => this.recentCompressions.set(data)
     });
     this.api.getFormatBreakdown().subscribe({
-      next: (data) => this.formatBreakdown.set(data)
+      next: data => this.formatBreakdown.set(data)
     });
   }
 }

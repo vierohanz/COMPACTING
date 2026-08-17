@@ -11,10 +11,7 @@ import {
   ApiKeyDto,
   CreateApiKeyRequest
 } from '../../shared/models/api-key.model';
-import {
-  CompressionOptions,
-  CompressionResult
-} from '../../shared/models/compression.model';
+import { CompressionOptions, CompressionResult } from '../../shared/models/compression.model';
 import { API_CONFIG } from '../config/api.config';
 
 @Injectable({
@@ -24,10 +21,7 @@ export class ApiService {
   private http = inject(HttpClient);
   private baseUrl = API_CONFIG.baseUrl;
 
-  compressImage(
-    file: File,
-    options: CompressionOptions
-  ): Observable<CompressionResult> {
+  compressImage(file: File, options: CompressionOptions): Observable<CompressionResult> {
     const formData = new FormData();
     formData.append('file', file, file.name);
 
@@ -37,10 +31,8 @@ export class ApiService {
       .set('stripMetadata', options.stripMetadata.toString())
       .set('lossless', options.lossless.toString());
 
-    if (options.maxWidth)
-      params = params.set('maxWidth', options.maxWidth.toString());
-    if (options.maxHeight)
-      params = params.set('maxHeight', options.maxHeight.toString());
+    if (options.maxWidth) params = params.set('maxWidth', options.maxWidth.toString());
+    if (options.maxHeight) params = params.set('maxHeight', options.maxHeight.toString());
 
     return this.http.post<CompressionResult>(
       `${this.baseUrl}${API_CONFIG.endpoints.compressJson}`,
@@ -50,14 +42,10 @@ export class ApiService {
   }
 
   getApiKeys(): Observable<ApiKeyDto[]> {
-    return this.http.get<ApiKeyDto[]>(
-      `${this.baseUrl}${API_CONFIG.endpoints.apiKeys}`
-    );
+    return this.http.get<ApiKeyDto[]>(`${this.baseUrl}${API_CONFIG.endpoints.apiKeys}`);
   }
 
-  createApiKey(
-    request: CreateApiKeyRequest
-  ): Observable<ApiKeyCreatedResponse> {
+  createApiKey(request: CreateApiKeyRequest): Observable<ApiKeyCreatedResponse> {
     return this.http.post<ApiKeyCreatedResponse>(
       `${this.baseUrl}${API_CONFIG.endpoints.apiKeys}`,
       request
@@ -65,9 +53,7 @@ export class ApiService {
   }
 
   revokeApiKey(id: string): Observable<void> {
-    return this.http.delete<void>(
-      `${this.baseUrl}${API_CONFIG.endpoints.apiKeys}/${id}`
-    );
+    return this.http.delete<void>(`${this.baseUrl}${API_CONFIG.endpoints.apiKeys}/${id}`);
   }
 
   getAnalyticsSummary(): Observable<AnalyticsSummary> {

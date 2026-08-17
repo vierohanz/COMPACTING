@@ -6,129 +6,105 @@ import { Component, signal } from '@angular/core';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <section class="docs-layout">
-      <div class="glass-panel docs-card">
-        <div class="panel-header">
-          <h2>External Web & API Integration</h2>
-          <p>
-            Connect your WordPress, Laravel, Next.js, Node.js, Python, or PHP
-            apps to COMPACTING.
+    <section class="space-y-6">
+      <div class="rounded-xl border border-slate-200/80 bg-white shadow-xs p-6 space-y-5">
+        <div class="space-y-1">
+          <h2 class="text-base font-semibold tracking-tight text-slate-900">
+            External Web & API Integration
+          </h2>
+          <p class="text-xs text-slate-500">
+            Connect your WordPress, Laravel, Next.js, Node.js, Python, or PHP apps to COMPACTING.
           </p>
         </div>
 
-        <div class="code-tab-selector">
+        <div
+          class="inline-flex h-9 items-center justify-center rounded-lg bg-slate-100 p-1 text-slate-500"
+        >
           <button
-            class="code-tab"
-            [class.active-code-tab]="selectedCodeLanguage() === 'curl'"
+            class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium transition-all"
+            [ngClass]="
+              selectedCodeLanguage() === 'curl'
+                ? 'bg-white text-slate-950 shadow-xs font-semibold'
+                : 'text-slate-600 hover:text-slate-900'
+            "
             (click)="selectedCodeLanguage.set('curl')"
           >
             cURL
           </button>
           <button
-            class="code-tab"
-            [class.active-code-tab]="selectedCodeLanguage() === 'js'"
+            class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium transition-all"
+            [ngClass]="
+              selectedCodeLanguage() === 'js'
+                ? 'bg-white text-slate-950 shadow-xs font-semibold'
+                : 'text-slate-600 hover:text-slate-900'
+            "
             (click)="selectedCodeLanguage.set('js')"
           >
             JavaScript / Fetch
           </button>
           <button
-            class="code-tab"
-            [class.active-code-tab]="selectedCodeLanguage() === 'php'"
+            class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium transition-all"
+            [ngClass]="
+              selectedCodeLanguage() === 'php'
+                ? 'bg-white text-slate-950 shadow-xs font-semibold'
+                : 'text-slate-600 hover:text-slate-900'
+            "
             (click)="selectedCodeLanguage.set('php')"
           >
             PHP
           </button>
           <button
-            class="code-tab"
-            [class.active-code-tab]="selectedCodeLanguage() === 'python'"
+            class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium transition-all"
+            [ngClass]="
+              selectedCodeLanguage() === 'python'
+                ? 'bg-white text-slate-950 shadow-xs font-semibold'
+                : 'text-slate-600 hover:text-slate-900'
+            "
             (click)="selectedCodeLanguage.set('python')"
           >
             Python
           </button>
           <button
-            class="code-tab"
-            [class.active-code-tab]="selectedCodeLanguage() === 'csharp'"
+            class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium transition-all"
+            [ngClass]="
+              selectedCodeLanguage() === 'csharp'
+                ? 'bg-white text-slate-950 shadow-xs font-semibold'
+                : 'text-slate-600 hover:text-slate-900'
+            "
             (click)="selectedCodeLanguage.set('csharp')"
           >
             C# (.NET)
           </button>
         </div>
 
-        <div class="code-box">
+        <div class="rounded-lg border border-slate-800 bg-slate-950 p-4.5 overflow-x-auto">
           <pre
             *ngIf="selectedCodeLanguage() === 'curl'"
+            class="text-xs font-mono text-slate-100 leading-relaxed m-0"
           ><code [textContent]="curlSnippet"></code></pre>
           <pre
             *ngIf="selectedCodeLanguage() === 'js'"
+            class="text-xs font-mono text-slate-100 leading-relaxed m-0"
           ><code [textContent]="jsSnippet"></code></pre>
           <pre
             *ngIf="selectedCodeLanguage() === 'php'"
+            class="text-xs font-mono text-slate-100 leading-relaxed m-0"
           ><code [textContent]="phpSnippet"></code></pre>
           <pre
             *ngIf="selectedCodeLanguage() === 'python'"
+            class="text-xs font-mono text-slate-100 leading-relaxed m-0"
           ><code [textContent]="pythonSnippet"></code></pre>
           <pre
             *ngIf="selectedCodeLanguage() === 'csharp'"
+            class="text-xs font-mono text-slate-100 leading-relaxed m-0"
           ><code [textContent]="csharpSnippet"></code></pre>
         </div>
       </div>
     </section>
-  `,
-  styles: [
-    `
-      .docs-layout {
-        display: flex;
-        flex-direction: column;
-        gap: 24px;
-      }
-      .docs-card {
-        padding: 24px;
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
-      }
-      .code-tab-selector {
-        display: flex;
-        gap: 8px;
-        border-bottom: 1px solid var(--border-subtle);
-        padding-bottom: 12px;
-      }
-      .code-tab {
-        background: transparent;
-        border: 1px solid var(--border-subtle);
-        color: var(--text-muted);
-        padding: 8px 16px;
-        border-radius: var(--radius-sm);
-        font-weight: 600;
-        font-size: 0.85rem;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-      .code-tab.active-code-tab {
-        background: #10b981;
-        color: white;
-        border-color: #10b981;
-      }
-      .code-box {
-        background: #050810;
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--radius-md);
-        padding: 20px;
-        overflow-x: auto;
-      }
-      .code-box pre {
-        margin: 0;
-        color: #e2e8f0;
-        font-size: 0.9rem;
-        line-height: 1.6;
-      }
-    `
-  ]
+  `
 })
 export class DocsComponent {
-  selectedCodeLanguage = signal<'curl' | 'js' | 'php' | 'python' | 'csharp'>(
-    'curl'
-  );
+  selectedCodeLanguage = signal<'curl' | 'js' | 'php' | 'python' | 'csharp'>('curl');
 
   curlSnippet = `curl -X POST "http://localhost:5126/api/v1/compression/compress?quality=80&format=WebP" \\
   -H "X-API-Key: YOUR_API_KEY_HERE" \\

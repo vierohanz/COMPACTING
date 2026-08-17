@@ -35,7 +35,7 @@ public class GlobalExceptionMiddleware
         {
             error = "An error occurred while processing your image compression request.",
             details = exception.Message,
-            statusCode = context.Response.StatusCode
+            statusCode = context.Response.StatusCode,
         };
 
         var json = JsonSerializer.Serialize(response);

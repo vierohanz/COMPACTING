@@ -29,7 +29,10 @@ public class ApiKeyController : ControllerBase
     /// </summary>
     [HttpPost]
     [ProducesResponseType(typeof(ApiKeyCreatedResponseDto), StatusCodes.Status201Created)]
-    public async Task<IActionResult> Create([FromBody] CreateApiKeyRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Create(
+        [FromBody] CreateApiKeyRequest request,
+        CancellationToken cancellationToken
+    )
     {
         if (!ModelState.IsValid)
         {

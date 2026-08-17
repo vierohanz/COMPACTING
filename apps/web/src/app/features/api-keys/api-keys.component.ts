@@ -10,71 +10,76 @@ import { formatBytes } from '../../core/utils/utils';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <section class="apikeys-layout">
-      <div class="glass-panel apikey-form-card">
-        <div class="panel-header">
-          <h2>Generate API Key</h2>
-          <p>
-            Create credentials for external websites, apps, and CI/CD pipelines
-            to offload compression.
+    <section class="space-y-6">
+      <div class="rounded-xl border border-slate-200/80 bg-white shadow-xs p-6 space-y-5">
+        <div class="space-y-1">
+          <h2 class="text-base font-semibold tracking-tight text-slate-900">Generate API Key</h2>
+          <p class="text-xs text-slate-500">
+            Create credentials for external websites, apps, and CI/CD pipelines to offload
+            compression.
           </p>
         </div>
 
-        <div class="form-grid">
-          <div class="setting-item">
-            <label class="field-label">Key Name / Application</label>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="space-y-1.5">
+            <label class="text-xs font-medium text-slate-700 block">Key Name / Application</label>
             <input
               type="text"
               [(ngModel)]="newKeyName"
               placeholder="e.g. NextJS Blog, WordPress Plugin, Mobile App"
-              class="custom-input"
+              class="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-pink-500 text-slate-900 placeholder:text-slate-400"
             />
           </div>
-          <div class="setting-item">
-            <label class="field-label">Rate Limit (req/min)</label>
+          <div class="space-y-1.5">
+            <label class="text-xs font-medium text-slate-700 block">Rate Limit (req/min)</label>
             <input
               type="number"
               [(ngModel)]="newKeyRateLimit"
-              class="custom-input"
+              class="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-pink-500 text-slate-900"
             />
           </div>
-          <div class="setting-item">
-            <label class="field-label">Expires In (Days)</label>
+          <div class="space-y-1.5">
+            <label class="text-xs font-medium text-slate-700 block">Expires In (Days)</label>
             <input
               type="number"
               [(ngModel)]="newKeyExpiresDays"
               placeholder="Never"
-              class="custom-input"
+              class="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-pink-500 text-slate-900 placeholder:text-slate-400"
             />
           </div>
         </div>
 
-        <button
-          class="btn-primary"
-          (click)="handleCreate()"
-          [disabled]="store.isCreatingKey() || !newKeyName.trim()"
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
+        <div>
+          <button
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-xs font-semibold transition-colors bg-pink-600 text-white shadow-xs hover:bg-pink-700 h-9 px-4 disabled:opacity-50"
+            (click)="handleCreate()"
+            [disabled]="store.isCreatingKey() || !newKeyName.trim()"
           >
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          <span>Generate New Key</span>
-        </button>
-
-        <div *ngIf="store.createdKeySecret()" class="key-secret-alert">
-          <div class="alert-icon">
             <svg
-              width="24"
-              height="24"
+              width="14"
+              height="14"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#F59E0B"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            <span>Generate New Key</span>
+          </button>
+        </div>
+
+        <div
+          *ngIf="store.createdKeySecret()"
+          class="rounded-lg border border-pink-200 bg-pink-50/60 p-4 flex gap-3.5 mt-2"
+        >
+          <div class="text-pink-600 mt-0.5">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
               stroke-width="2"
             >
               <path
@@ -84,13 +89,19 @@ import { formatBytes } from '../../core/utils/utils';
               <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
           </div>
-          <div class="alert-content">
-            <h4>Make sure to copy your API key now</h4>
-            <p>You will not be able to see it again.</p>
-            <div class="secret-box">
-              <code>{{ store.createdKeySecret() }}</code>
+          <div class="flex-1 space-y-1">
+            <h4 class="text-xs font-semibold text-slate-900">Make sure to copy your API key now</h4>
+            <p class="text-[11px] text-slate-500">
+              You will not be able to see this secret again once refreshed.
+            </p>
+            <div
+              class="flex items-center gap-2.5 bg-white border border-slate-200 px-3 py-1.5 rounded-md mt-2"
+            >
+              <code class="font-mono text-xs font-bold text-pink-600 flex-1 break-all select-all">{{
+                store.createdKeySecret()
+              }}</code>
               <button
-                class="copy-btn"
+                class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-xs font-semibold bg-pink-600 text-white shadow-xs hover:bg-pink-700 h-7 px-3"
                 (click)="clipboard.copy(store.createdKeySecret()!)"
               >
                 {{ clipboard.isCopied() ? 'Copied' : 'Copy' }}
@@ -100,50 +111,62 @@ import { formatBytes } from '../../core/utils/utils';
         </div>
       </div>
 
-      <div class="glass-panel apikey-table-card">
-        <div class="panel-header">
-          <h2>Active API Keys ({{ store.apiKeys().length }})</h2>
-        </div>
+      <div class="rounded-xl border border-slate-200/80 bg-white shadow-xs p-6 space-y-4">
+        <h2 class="text-base font-semibold tracking-tight text-slate-900">
+          Active API Keys ({{ store.apiKeys().length }})
+        </h2>
 
-        <div class="table-responsive">
-          <table class="custom-table">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
             <thead>
-              <tr>
-                <th>Name</th>
-                <th>Prefix</th>
-                <th>Created</th>
-                <th>Rate Limit</th>
-                <th>Total Requests</th>
-                <th>Bytes Saved</th>
-                <th>Status</th>
-                <th>Action</th>
+              <tr class="border-b border-slate-200 text-slate-500 font-medium">
+                <th class="h-9 px-4">Name</th>
+                <th class="h-9 px-4">Prefix</th>
+                <th class="h-9 px-4">Created</th>
+                <th class="h-9 px-4">Rate Limit</th>
+                <th class="h-9 px-4">Total Requests</th>
+                <th class="h-9 px-4">Bytes Saved</th>
+                <th class="h-9 px-4">Status</th>
+                <th class="h-9 px-4">Action</th>
               </tr>
             </thead>
-            <tbody>
-              <tr *ngFor="let key of store.apiKeys()">
-                <td class="font-bold">{{ key.name }}</td>
-                <td>
-                  <code class="code-pill">{{ key.keyPrefix }}</code>
+            <tbody class="divide-y divide-slate-100">
+              <tr
+                *ngFor="let key of store.apiKeys()"
+                class="hover:bg-slate-50/70 transition-colors"
+              >
+                <td class="py-3 px-4 font-semibold text-slate-900">
+                  {{ key.name }}
                 </td>
-                <td>{{ key.createdAt | date: 'shortDate' }}</td>
-                <td>{{ key.rateLimitPerMin }} req/m</td>
-                <td>{{ key.totalRequests | number }}</td>
-                <td class="text-green">
+                <td class="py-3 px-4 font-mono text-pink-600 font-semibold">
+                  {{ key.keyPrefix }}
+                </td>
+                <td class="py-3 px-4 text-slate-600">
+                  {{ key.createdAt | date: 'shortDate' }}
+                </td>
+                <td class="py-3 px-4 text-slate-600">{{ key.rateLimitPerMin }} req/m</td>
+                <td class="py-3 px-4 text-slate-600">
+                  {{ key.totalRequests | number }}
+                </td>
+                <td class="py-3 px-4 font-semibold text-pink-600">
                   {{ formatBytes(key.totalBytesSaved) }}
                 </td>
-                <td>
+                <td class="py-3 px-4">
                   <span
-                    class="badge"
-                    [class.badge-emerald]="!key.isRevoked"
-                    [class.badge-rose]="key.isRevoked"
+                    class="inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold"
+                    [ngClass]="
+                      !key.isRevoked
+                        ? 'border-pink-200 bg-pink-50 text-pink-700'
+                        : 'border-rose-200 bg-rose-50 text-rose-700'
+                    "
                   >
                     {{ key.isRevoked ? 'Revoked' : 'Active' }}
                   </span>
                 </td>
-                <td>
+                <td class="py-3 px-4">
                   <button
                     *ngIf="!key.isRevoked"
-                    class="btn-revoke"
+                    class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-[11px] font-medium border border-rose-200 bg-white text-rose-600 shadow-xs hover:bg-rose-50 hover:text-rose-700 h-7 px-2.5 transition-colors"
                     (click)="store.revokeKey(key.id)"
                   >
                     Revoke
@@ -151,7 +174,7 @@ import { formatBytes } from '../../core/utils/utils';
                 </td>
               </tr>
               <tr *ngIf="store.apiKeys().length === 0">
-                <td colspan="8" class="text-center py-4 text-muted">
+                <td colspan="8" class="text-center py-6 text-slate-400">
                   No API keys generated yet.
                 </td>
               </tr>
@@ -160,131 +183,7 @@ import { formatBytes } from '../../core/utils/utils';
         </div>
       </div>
     </section>
-  `,
-  styles: [
-    `
-      .apikeys-layout {
-        display: flex;
-        flex-direction: column;
-        gap: 24px;
-      }
-      .apikey-form-card,
-      .apikey-table-card {
-        padding: 24px;
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
-      }
-      .form-grid {
-        display: grid;
-        grid-template-columns: 2fr 1fr 1fr;
-        gap: 16px;
-      }
-      @media (max-width: 768px) {
-        .form-grid {
-          grid-template-columns: 1fr;
-        }
-      }
-      .key-secret-alert {
-        margin-top: 12px;
-        background: rgba(245, 158, 11, 0.1);
-        border: 1px solid rgba(245, 158, 11, 0.3);
-        padding: 16px;
-        border-radius: var(--radius-md);
-        display: flex;
-        gap: 14px;
-      }
-      .secret-box {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        background: rgba(0, 0, 0, 0.4);
-        padding: 8px 12px;
-        border-radius: var(--radius-sm);
-        margin-top: 8px;
-      }
-      .secret-box code {
-        color: #38bdf8;
-        font-weight: 600;
-        flex: 1;
-        word-break: break-all;
-      }
-      .copy-btn {
-        background: #10b981;
-        color: white;
-        border: none;
-        padding: 6px 14px;
-        border-radius: 4px;
-        font-weight: 600;
-        cursor: pointer;
-      }
-      .table-responsive {
-        overflow-x: auto;
-      }
-      .custom-table {
-        width: 100%;
-        border-collapse: collapse;
-        text-align: left;
-      }
-      .custom-table th {
-        padding: 12px 16px;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: var(--text-muted);
-        border-bottom: 1px solid var(--border-subtle);
-      }
-      .custom-table td {
-        padding: 14px 16px;
-        font-size: 0.875rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-      }
-      .code-pill {
-        background: rgba(255, 255, 255, 0.06);
-        padding: 3px 8px;
-        border-radius: 4px;
-        font-family: var(--font-mono);
-        font-size: 0.8rem;
-      }
-      .text-green {
-        color: #34d399;
-      }
-      .font-bold {
-        font-weight: 600;
-      }
-      .btn-revoke {
-        background: rgba(244, 63, 94, 0.15);
-        border: 1px solid rgba(244, 63, 94, 0.3);
-        color: #fb7185;
-        padding: 4px 10px;
-        border-radius: var(--radius-sm);
-        font-size: 0.75rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-      .btn-revoke:hover {
-        background: rgba(244, 63, 94, 0.3);
-      }
-      .custom-input {
-        width: 100%;
-        background: var(--bg-surface-elevated);
-        border: 1px solid var(--border-subtle);
-        padding: 10px 14px;
-        border-radius: var(--radius-sm);
-        color: var(--text-main);
-        font-size: 0.875rem;
-        outline: none;
-      }
-      .field-label {
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: var(--text-muted);
-        margin-bottom: 6px;
-        display: block;
-      }
-    `
-  ]
+  `
 })
 export class ApiKeysComponent {
   store = inject(CompressionStore);
