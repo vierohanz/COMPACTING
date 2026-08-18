@@ -8,14 +8,18 @@ services:
     ports:
       - "80:80"
       - "5126:5126"
+    env_file:
+      - .env
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:80;http://+:5126
-      - ConnectionStrings__PostgreSql=Host=postgres;Port=5432;Database=compacting;Username=postgres;Password=compacting_secret;
-      - Redis__ConnectionString=dragonfly:6379
-      - Jwt__Secret=SpiderManQuantumCompactingSecretKeyMustBe32CharsLong!2026
-      - Jwt__Issuer=CompactingApi
-      - Jwt__Audience=CompactingClients
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
+      - ASPNETCORE_URLS=${ASPNETCORE_URLS:-http://+:80;http://+:5126}
+      - ConnectionStrings__DefaultConnection=${ConnectionStrings__DefaultConnection:-Host=postgres;Port=5432;Database=compacting;Username=postgres;Password=compacting_secret;}
+      - Dragonfly__Endpoint=${Dragonfly__Endpoint:-dragonfly:6379}
+      - Dragonfly__Password=${Dragonfly__Password:-}
+      - Dragonfly__KeyPrefix=${Dragonfly__KeyPrefix:-compacting}
+      - Jwt__Secret=${Jwt__Secret:-c0mp4ct1ng_sup3r_s3cur3_jwt_s3cr3t_k3y_2026_x99_m4x_pr0t0c0l!}
+      - Jwt__Issuer=${Jwt__Issuer:-CompactingApi}
+      - Jwt__Audience=${Jwt__Audience:-CompactingClients}
     depends_on:
       - postgres
       - dragonfly
@@ -25,13 +29,13 @@ services:
     container_name: compacting-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: compacting
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: compacting_secret
+      POSTGRES_DB: ${POSTGRES_DB:-compacting}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-compacting_secret}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
 
   dragonfly:
     image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
