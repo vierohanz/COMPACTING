@@ -3,6 +3,7 @@ namespace Compacting.Api.Db;
 public class ApiKeyEntity
 {
     public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid? UserId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string KeyPrefix { get; set; } = string.Empty;
     public string KeyHash { get; set; } = string.Empty;

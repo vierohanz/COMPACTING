@@ -42,6 +42,7 @@ public class CompressionController : ControllerBase
             HttpContext.Items.TryGetValue("ApiKeyId", out var idObj) && idObj is Guid keyId
                 ? keyId
                 : null;
+        Guid? currentUserId = GetCurrentUserId();
 
         await using var stream = file.OpenReadStream();
         var processed = await _compressionService.CompressAsync(
@@ -50,6 +51,7 @@ public class CompressionController : ControllerBase
             options,
             apiKeyId,
             clientIp,
+            currentUserId,
             cancellationToken
         );
 
@@ -103,6 +105,7 @@ public class CompressionController : ControllerBase
             HttpContext.Items.TryGetValue("ApiKeyId", out var idObj) && idObj is Guid keyId
                 ? keyId
                 : null;
+        Guid? currentUserId = GetCurrentUserId();
 
         await using var stream = file.OpenReadStream();
         var processed = await _compressionService.CompressAsync(
@@ -111,6 +114,7 @@ public class CompressionController : ControllerBase
             options,
             apiKeyId,
             clientIp,
+            currentUserId,
             cancellationToken
         );
 
@@ -140,6 +144,7 @@ public class CompressionController : ControllerBase
             HttpContext.Items.TryGetValue("ApiKeyId", out var idObj) && idObj is Guid keyId
                 ? keyId
                 : null;
+        Guid? currentUserId = GetCurrentUserId();
 
         var streams = new List<(Stream Stream, string FileName)>();
         foreach (var file in files)
@@ -152,6 +157,7 @@ public class CompressionController : ControllerBase
             options,
             apiKeyId,
             clientIp,
+            currentUserId,
             cancellationToken
         );
 
@@ -161,5 +167,16 @@ public class CompressionController : ControllerBase
         }
 
         return Ok(results.Select(r => r.Metadata).ToList());
+    }
+
+    private Guid? GetCurrentUserId()
+    {
+        var sub = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? User.FindFirst("sub")?.Value;
+        if (!string.IsNullOrEmpty(sub) && Guid.TryParse(sub, out var uid))
+        {
+            return uid;
+        }
+        return null;
     }
 }

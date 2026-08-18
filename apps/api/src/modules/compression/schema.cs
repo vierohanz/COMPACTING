@@ -39,6 +39,14 @@ public class CompressionOptionsDto
 
     public bool Lossless { get; set; } = false;
 
+    [Range(1.0, 16.0)]
+    public double Scale { get; set; } = 1.0;
+
+    public bool EnhanceHd { get; set; } = false;
+
+    [Range(0.0, 3.0)]
+    public double Sharpen { get; set; } = 0.0;
+
     public bool ReturnBase64 { get; set; } = false;
 }
 

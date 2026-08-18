@@ -18,6 +18,7 @@ public interface ICompressionService
         CompressionOptionsDto options,
         Guid? apiKeyId = null,
         string? clientIp = null,
+        Guid? userId = null,
         CancellationToken cancellationToken = default
     );
 
@@ -26,6 +27,7 @@ public interface ICompressionService
         CompressionOptionsDto options,
         Guid? apiKeyId = null,
         string? clientIp = null,
+        Guid? userId = null,
         CancellationToken cancellationToken = default
     );
 }
@@ -47,6 +49,7 @@ public class CompressionService : ICompressionService
         CompressionOptionsDto options,
         Guid? apiKeyId = null,
         string? clientIp = null,
+        Guid? userId = null,
         CancellationToken cancellationToken = default
     )
     {
@@ -75,25 +78,42 @@ public class CompressionService : ICompressionService
                 image.Metadata.XmpProfile = null;
             }
 
-            if (options.MaxWidth.HasValue || options.MaxHeight.HasValue)
+            int targetWidth = image.Width;
+            int targetHeight = image.Height;
+
+            if (options.Scale > 1)
+            {
+                targetWidth = (int)Math.Round(image.Width * options.Scale);
+                targetHeight = (int)Math.Round(image.Height * options.Scale);
+                var resizeOptions = new ResizeOptions
+                {
+                    Size = new Size(targetWidth, targetHeight),
+                    Mode = ResizeMode.Stretch,
+                    Sampler = KnownResamplers.Lanczos3,
+                };
+                image.Mutate(ctx => ctx.Resize(resizeOptions));
+            }
+            else if (options.MaxWidth.HasValue || options.MaxHeight.HasValue)
             {
                 var resizeOptions = new ResizeOptions
                 {
-                    Size = new Size(options.MaxWidth ?? 0, options.MaxHeight ?? 0),
-                    Mode = options.ResizeMode switch
-                    {
-                        ResizeModeOption.Crop => ResizeMode.Crop,
-                        ResizeModeOption.Pad => ResizeMode.Pad,
-                        ResizeModeOption.Stretch => ResizeMode.Stretch,
-                        ResizeModeOption.Max => ResizeMode.Max,
-                        _ => ResizeMode.Max,
-                    },
+                    Size = new Size(
+                        options.MaxWidth ?? image.Width,
+                        options.MaxHeight ?? image.Height
+                    ),
+                    Mode = ResizeMode.Max,
+                    Sampler = KnownResamplers.Lanczos3,
                 };
-
-                image.Mutate(x => x.Resize(resizeOptions));
+                image.Mutate(ctx => ctx.Resize(resizeOptions));
             }
 
-            var (encoder, targetExtension, contentType, targetFormatName) = ResolveEncoder(
+            if (options.EnhanceHd)
+            {
+                float amount = Math.Clamp((float)options.Sharpen, 0.5f, 2.5f);
+                image.Mutate(ctx => ctx.GaussianSharpen(amount));
+            }
+
+            var (encoder, extension, contentType, targetFormatName) = ResolveEncoder(
                 options,
                 sourceFormat
             );
@@ -101,16 +121,16 @@ public class CompressionService : ICompressionService
             using var outputStream = new MemoryStream();
             await image.SaveAsync(outputStream, encoder, cancellationToken);
             byte[] compressedBytes = outputStream.ToArray();
-
-            stopwatch.Stop();
             long compressedSize = compressedBytes.Length;
+
             long bytesSaved = Math.Max(0, originalSize - compressedSize);
             double ratioPercent =
                 originalSize > 0
-                    ? Math.Round((1.0 - ((double)compressedSize / originalSize)) * 100.0, 2)
-                    : 0.0;
+                    ? Math.Round(((double)bytesSaved / originalSize) * 100, 2)
+                    : 0;
 
-            string targetFileName = Path.ChangeExtension(originalFileName, targetExtension);
+            string baseName = Path.GetFileNameWithoutExtension(originalFileName);
+            string targetFileName = $"{baseName}{extension}";
 
             var metadata = new CompressionResultDto(
                 Success: true,
@@ -130,8 +150,28 @@ public class CompressionService : ICompressionService
 
             try
             {
+                Guid? effectiveUserId = userId;
+
+                if (apiKeyId.HasValue)
+                {
+                    var apiKey = await _dbContext.ApiKeys.FindAsync(
+                        new object[] { apiKeyId.Value },
+                        cancellationToken
+                    );
+                    if (apiKey != null)
+                    {
+                        apiKey.TotalRequests++;
+                        apiKey.TotalBytesSaved += bytesSaved;
+                        if (!effectiveUserId.HasValue && apiKey.UserId.HasValue)
+                        {
+                            effectiveUserId = apiKey.UserId;
+                        }
+                    }
+                }
+
                 var logEntry = new CompressionLogEntity
                 {
+                    UserId = effectiveUserId,
                     ApiKeyId = apiKeyId,
                     OriginalFileName = originalFileName,
                     SourceFormat = sourceFormat.Name,
@@ -148,20 +188,6 @@ public class CompressionService : ICompressionService
                 };
 
                 _dbContext.CompressionLogs.Add(logEntry);
-
-                if (apiKeyId.HasValue)
-                {
-                    var apiKey = await _dbContext.ApiKeys.FindAsync(
-                        new object[] { apiKeyId.Value },
-                        cancellationToken
-                    );
-                    if (apiKey != null)
-                    {
-                        apiKey.TotalRequests++;
-                        apiKey.TotalBytesSaved += bytesSaved;
-                    }
-                }
-
                 await _dbContext.SaveChangesAsync(cancellationToken);
             }
             catch (Exception ex)
@@ -184,6 +210,7 @@ public class CompressionService : ICompressionService
         CompressionOptionsDto options,
         Guid? apiKeyId = null,
         string? clientIp = null,
+        Guid? userId = null,
         CancellationToken cancellationToken = default
     )
     {
@@ -199,6 +226,7 @@ public class CompressionService : ICompressionService
                     options,
                     apiKeyId,
                     clientIp,
+                    userId,
                     cancellationToken
                 );
                 results.Add(processed);

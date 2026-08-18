@@ -1,0 +1,46 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: compacting-app
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "5126:5126"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80;http://+:5126
+      - ConnectionStrings__PostgreSql=Host=postgres;Port=5432;Database=compacting;Username=postgres;Password=compacting_secret;
+      - Redis__ConnectionString=dragonfly:6379
+      - Jwt__Secret=SpiderManQuantumCompactingSecretKeyMustBe32CharsLong!2026
+      - Jwt__Issuer=CompactingApi
+      - Jwt__Audience=CompactingClients
+    depends_on:
+      - postgres
+      - dragonfly
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: compacting-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: compacting
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: compacting_secret
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  dragonfly:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
+    container_name: compacting-dragonfly
+    restart: unless-stopped
+    ulimits:
+      memlock: -1
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:

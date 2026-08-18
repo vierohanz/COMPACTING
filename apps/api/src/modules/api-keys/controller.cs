@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Compacting.Api.Modules.ApiKeys;
@@ -14,13 +15,14 @@ public class ApiKeyController : ControllerBase
     }
 
     /// <summary>
-    /// Retrieve all registered API keys.
+    /// Retrieve all registered API keys for current user or platform.
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(List<ApiKeyDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var keys = await _apiKeyService.GetAllKeysAsync(cancellationToken);
+        Guid? currentUserId = GetCurrentUserId();
+        var keys = await _apiKeyService.GetAllKeysAsync(currentUserId, cancellationToken);
         return Ok(keys);
     }
 
@@ -39,7 +41,8 @@ public class ApiKeyController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        var result = await _apiKeyService.CreateKeyAsync(request, cancellationToken);
+        Guid? currentUserId = GetCurrentUserId();
+        var result = await _apiKeyService.CreateKeyAsync(request, currentUserId, cancellationToken);
         return StatusCode(StatusCodes.Status201Created, result);
     }
 
@@ -51,12 +54,24 @@ public class ApiKeyController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Revoke(Guid id, CancellationToken cancellationToken)
     {
-        bool success = await _apiKeyService.RevokeKeyAsync(id, cancellationToken);
+        Guid? currentUserId = GetCurrentUserId();
+        bool success = await _apiKeyService.RevokeKeyAsync(id, currentUserId, cancellationToken);
         if (!success)
         {
-            return NotFound(new { error = "API key not found." });
+            return NotFound(new { error = "API key not found or not authorized." });
         }
 
         return NoContent();
+    }
+
+    private Guid? GetCurrentUserId()
+    {
+        var sub = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? User.FindFirst("sub")?.Value;
+        if (!string.IsNullOrEmpty(sub) && Guid.TryParse(sub, out var uid))
+        {
+            return uid;
+        }
+        return null;
     }
 }

@@ -1,5 +1,8 @@
 export const API_CONFIG = {
-  baseUrl: 'http://localhost:5126/api/v1',
+  baseUrl:
+    typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+      ? `${window.location.origin}/api/v1`
+      : 'http://localhost:5126/api/v1',
   endpoints: {
     compress: '/compression/compress',
     compressJson: '/compression/compress-json',

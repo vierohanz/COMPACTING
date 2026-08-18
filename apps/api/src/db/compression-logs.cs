@@ -3,6 +3,7 @@ namespace Compacting.Api.Db;
 public class CompressionLogEntity
 {
     public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid? UserId { get; set; }
     public Guid? ApiKeyId { get; set; }
     public string OriginalFileName { get; set; } = string.Empty;
     public string SourceFormat { get; set; } = string.Empty;

@@ -33,6 +33,9 @@ export class ApiService {
 
     if (options.maxWidth) params = params.set('maxWidth', options.maxWidth.toString());
     if (options.maxHeight) params = params.set('maxHeight', options.maxHeight.toString());
+    if (options.scale && options.scale > 1) params = params.set('scale', options.scale.toString());
+    if (options.enhanceHd !== undefined) params = params.set('enhanceHd', options.enhanceHd.toString());
+    if (options.sharpen && options.sharpen > 0) params = params.set('sharpen', options.sharpen.toString());
 
     return this.http.post<CompressionResult>(
       `${this.baseUrl}${API_CONFIG.endpoints.compressJson}`,
@@ -56,21 +59,27 @@ export class ApiService {
     return this.http.delete<void>(`${this.baseUrl}${API_CONFIG.endpoints.apiKeys}/${id}`);
   }
 
-  getAnalyticsSummary(): Observable<AnalyticsSummary> {
+  getAnalyticsSummary(global = false): Observable<AnalyticsSummary> {
+    const params = new HttpParams().set('global', global.toString());
     return this.http.get<AnalyticsSummary>(
-      `${this.baseUrl}${API_CONFIG.endpoints.analyticsSummary}`
+      `${this.baseUrl}${API_CONFIG.endpoints.analyticsSummary}`,
+      { params }
     );
   }
 
-  getRecentCompressions(): Observable<RecentCompressionItem[]> {
+  getRecentCompressions(limit = 20, global = false): Observable<RecentCompressionItem[]> {
+    const params = new HttpParams().set('limit', limit.toString()).set('global', global.toString());
     return this.http.get<RecentCompressionItem[]>(
-      `${this.baseUrl}${API_CONFIG.endpoints.analyticsRecent}`
+      `${this.baseUrl}${API_CONFIG.endpoints.analyticsRecent}`,
+      { params }
     );
   }
 
-  getFormatBreakdown(): Observable<FormatBreakdown[]> {
+  getFormatBreakdown(global = false): Observable<FormatBreakdown[]> {
+    const params = new HttpParams().set('global', global.toString());
     return this.http.get<FormatBreakdown[]>(
-      `${this.baseUrl}${API_CONFIG.endpoints.analyticsFormats}`
+      `${this.baseUrl}${API_CONFIG.endpoints.analyticsFormats}`,
+      { params }
     );
   }
 }

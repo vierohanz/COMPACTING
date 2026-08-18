@@ -1,110 +1,89 @@
-# COMPACTING - Self-Hosted Image Compression SaaS
+# COMPACTING - Self-Hosted Image Compression & AI Upscale SaaS
 
-> High-performance image compression engine and REST API gateway built with **ASP.NET Core 8** and **Angular 19** (managed by **Bun**).
+> Engine kompresi gambar dan REST API gateway performa tinggi berbasis **ASP.NET Core 8**, **Angular 19** (Bun), **PostgreSQL**, dan **Dragonfly Cache**.
 
 ---
 
-## 🏗️ Architecture Overview
+## 📚 Dokumentasi Lengkap (Documentation Index)
+
+1. ⚙️ **[Panduan Algoritma & Kompresi](file:///c:/laragon/www/COMPACTING/docs/COMPRESSION_AND_UPSCALE_GUIDE.md)**
+   - Cara kerja kompresi vs AI upscale
+   - Penjelasan teknis algoritma Lanczos-3, Gaussian Sharpening, DCT, dan Kuantisasi
+   - Benchmark performa dan hasil efisiensi rasio
+
+2. 🔌 **[Panduan Integrasi API Eksternal](file:///c:/laragon/www/COMPACTING/docs/API_INTEGRATION_GUIDE.md)**
+   - Spesifikasi endpoint `POST /api/v1/compression/compress`
+   - Contoh kode siap pakai di **cURL, JavaScript / Node.js, PHP / Laravel, Python, Go, dan C#**
+
+3. 🛡️ **[Arsitektur, Keamanan & Skema Database](file:///c:/laragon/www/COMPACTING/docs/ARCHITECTURE_AND_DATABASE.md)**
+   - Diagram arsitektur modular monolith
+   - Sistem JWT Token + Refresh Token Rotation 90 hari
+   - Skema lengkap tabel PostgreSQL (`users`, `refresh_tokens`, `api_keys`, `compression_logs`)
+
+---
+
+## 🏗️ Struktur Repositori
 
 ```text
 COMPACTING/
-├── .agents/
-│   ├── rules/
-│   │   └── project-rules.md
-│   └── skills/
-│       └── ui-ux-pro-max/          # Official UI/UX Pro Max Skill Suite
+├── docs/                           # Dokumentasi Arsitektur & Integrasi
+│   ├── COMPRESSION_AND_UPSCALE_GUIDE.md
+│   ├── API_INTEGRATION_GUIDE.md
+│   └── ARCHITECTURE_AND_DATABASE.md
 ├── apps/
 │   ├── api/                        # ASP.NET Core 8 Web API
 │   │   ├── src/
-│   │   │   ├── db/
-│   │   │   │   └── app-db-context.cs
-│   │   │   ├── middleware/
-│   │   │   │   ├── api-key-auth-middleware.cs
-│   │   │   │   └── global-exception-middleware.cs
-│   │   │   ├── modules/
-│   │   │   │   ├── analytics/      # controller.cs, services.cs, schema.cs, index.cs
-│   │   │   │   ├── api-keys/       # controller.cs, services.cs, schema.cs, index.cs
-│   │   │   │   ├── auth/           # controller.cs, services.cs, schema.cs, index.cs
-│   │   │   │   ├── compression/    # controller.cs, services.cs, schema.cs, index.cs
-│   │   │   │   └── storage/        # services.cs, schema.cs, index.cs
-│   │   │   └── utils/
-│   │   │       └── security-util.cs
-│   │   ├── Program.cs
-│   │   ├── api.csproj
-│   │   ├── .oxlintrc.json
-│   │   └── .prettierrc
-│   └── web/                        # Angular 19 SPA (Bun)
-│       ├── src/
-│       │   ├── app/
-│       │   │   ├── core/services/api.service.ts
-│       │   │   ├── app.component.ts
-│       │   │   ├── app.component.html
-│       │   │   └── app.component.css
-│       │   └── styles.css
-│       ├── .oxlintrc.json
-│       └── .prettierrc
-├── .oxlintrc.json
-├── .prettierrc
+│   │   │   ├── db/                 # EF Core DB Context & PostgreSQL Entities
+│   │   │   ├── middleware/         # API Key & Global Error Handling
+│   │   │   ├── modules/            # Auth, Compression, ApiKeys, Analytics, Storage
+│   │   │   └── utils/              # Security & Hashing Helpers
+│   │   └── Program.cs
+│   └── web/                        # Angular 19 Standalone SPA (Bun)
+│       └── src/app/
+│           ├── core/               # Stores, API Services, Configs
+│           ├── features/           # Playground, Upscale, ApiKeys, Analytics
+│           └── shared/             # Custom Spider Select, Badge, Models
 ├── package.json
-└── AGENTS.md
+└── README.md
 ```
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Memulai Proyek (Quick Start)
 
-### 1. Install Workspace Dependencies
-
+### 1. Install Dependensi Frontend
 ```bash
 bun install
 ```
 
-### 2. Run in Development Mode
-
-You can run both API and Frontend concurrently:
-
+### 2. Jalankan Server Secara Bersamaan
 ```bash
 bun run dev
 ```
 
-Or run them individually:
+Atau jalankan masing-masing:
 
-**Backend API (.NET 8):**
+- **Backend .NET 8 API**:
+  ```bash
+  cd apps/api
+  dotnet run
+  # Swagger: http://localhost:5126/swagger
+  ```
 
-```bash
-cd apps/api
-dotnet run
-# Swagger UI available at: http://localhost:5126/swagger
-```
-
-**Frontend SPA (Angular + Bun):**
-
-```bash
-cd apps/web
-bun run start
-# Web app available at: http://localhost:4200
-```
+- **Frontend Angular 19 (Bun)**:
+  ```bash
+  cd apps/web
+  bun run start
+  # Web Studio: http://localhost:4200
+  ```
 
 ---
 
-## 🧹 Code Quality & Linting
-
-Run **oxlint** and **prettier** across both apps:
+## ⚡ Contoh Pemanggilan Cepat via cURL
 
 ```bash
-bun run lint      # Ultra-fast oxlint
-bun run format    # Format all files with prettier
-```
-
----
-
-## 🔌 API Gateway & External Integrations
-
-External web applications (WordPress, Next.js, Laravel, Python, etc.) can compress images by sending requests with the `X-API-Key` header:
-
-```bash
-curl -X POST "http://localhost:5126/api/v1/compression/compress?quality=80&format=WebP" \
-  -H "X-API-Key: cmp_live_your_api_key_here" \
-  -F "file=@photo.png" \
-  --output compressed_photo.webp
+curl -X POST "https://compacting.raishannan.com/api/v1/compression/compress?format=WebP&quality=80" \
+  -H "X-API-Key: cmp_live_your_api_key_secret_here" \
+  -F "file=@foto.png" \
+  --output "foto_kompresi.webp"
 ```

@@ -40,6 +40,7 @@ public class AppDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.KeyHash);
             entity.HasIndex(e => e.KeyPrefix);
+            entity.HasIndex(e => e.UserId);
         });
 
         modelBuilder.Entity<CompressionLogEntity>(entity =>
@@ -48,6 +49,7 @@ public class AppDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.CreatedAt);
             entity.HasIndex(e => e.ApiKeyId);
+            entity.HasIndex(e => e.UserId);
         });
 
         foreach (var entity in modelBuilder.Model.GetEntityTypes())

@@ -9,20 +9,6 @@ public static class Routes
     public static IEndpointRouteBuilder MapApiRoutes(this IEndpointRouteBuilder app)
     {
         app.MapGet(
-            "/",
-            () =>
-                Results.Ok(
-                    new
-                    {
-                        service = "COMPACTING Image Compression Engine API",
-                        version = "1.0.0",
-                        status = "healthy",
-                        docs = "/swagger",
-                    }
-                )
-        );
-
-        app.MapGet(
             "/api/version",
             () =>
                 Results.Ok(
@@ -35,9 +21,13 @@ public static class Routes
                 )
         );
 
+        app.MapGet("/api/healthz", () => Results.Ok(new { status = "ok" }));
         app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
 
         app.MapControllers();
+
+        // Serve Angular SPA Fallback for client-side routing
+        app.MapFallbackToFile("index.html");
 
         return app;
     }

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 @source '.';
 @source './app';
@@ -6,23 +6,25 @@
 @source '../public';
 
 @theme {
-  --color-brand-50: #fdf2f8;
-  --color-brand-100: #fce7f3;
-  --color-brand-200: #fbcfe8;
-  --color-brand-300: #f9a8d4;
-  --color-brand-400: #f472b6;
-  --color-brand-500: #ec4899;
-  --color-brand-600: #db2777;
-  --color-brand-700: #be185d;
-  --color-brand-800: #9d174d;
-  --color-brand-900: #831843;
+  --color-spidey-red: #e21b24;
+  --color-spidey-red-dark: #b50e16;
+  --color-spidey-blue: #00d2ff;
+  --color-spidey-blue-3d: #013d82;
+  --color-spidey-gold: #ffcc00;
+  --color-spidey-gold-dark: #d4a000;
+  --color-spidey-navy-950: #040914;
+  --color-spidey-navy-900: #071324;
+  --color-spidey-navy-800: #0c1e38;
+  --color-spidey-navy-700: #132d52;
+  --color-spidey-navy-600: #1d4277;
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-hero: 'Bebas Neue', 'Impact', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
 body {
-  background-color: #fff7fa;
-  color: #0f172a;
+  background-color: #040914;
+  color: #f1f5f9;
   font-family:
     'Plus Jakarta Sans',
     system-ui,
@@ -30,19 +32,72 @@ body {
     sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
+/* Marvel Studios Badge */
+.marvel-badge {
+  display: inline-block;
+  background-color: #e21b24;
+  color: #ffffff;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  font-size: 10px;
+  border-radius: 2px;
+  box-shadow: 0 0 12px rgba(226, 27, 36, 0.4);
+}
+
+/* Spider-Man 3D Comic Extrusion Typography */
+.spiderman-3d-title {
+  font-family: 'Bebas Neue', 'Impact', sans-serif;
+  color: #e21b24;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-shadow:
+    1px 1px 0px #013d82,
+    2px 2px 0px #013d82,
+    3px 3px 0px #013d82,
+    4px 4px 0px #013d82,
+    5px 5px 0px #012b5c,
+    6px 6px 0px #012b5c,
+    7px 7px 0px #001733,
+    8px 8px 12px rgba(0, 0, 0, 0.9);
+}
+
+/* Brand New Day Gold Subtitle */
+.spiderman-gold-sub {
+  color: #ffcc00;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px rgba(255, 204, 0, 0.35);
+}
+
+/* Spider Web Grid Pattern */
+.spider-grid-pattern {
+  background-image: linear-gradient(to right, rgba(0, 61, 130, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(226, 27, 36, 0.06) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #fdf2f8;
+  background: #040914;
 }
 ::-webkit-scrollbar-thumb {
-  background: #fbcfe8;
+  background: #132d52;
   border-radius: 4px;
+  border: 1px solid #071324;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #ec4899;
+  background: #e21b24;
 }
+

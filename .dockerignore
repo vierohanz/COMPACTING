@@ -1,18 +1,26 @@
-node_modules
-.angular
-dist
-bin
-obj
-*.db
-*.db-shm
-*.db-wal
-compacting.db
-.git
-.gitignore
-.vscode
-.idea
-*.log
-.env
-.env.*
-!.env.example
-README.md
+**/.git
+**/.gitignore
+**/.vscode
+**/.idea
+**/*.log
+**/.env
+**/.env.*
+!**/.env.example
+
+# Node / Web artifacts
+**/node_modules
+**/.angular
+**/dist
+**/.turbo
+
+# .NET / C# build artifacts
+**/bin
+**/obj
+**/App_Data
+**/*.db
+**/*.user
+**/*.suo
+
+# OS temporary files
+**/.DS_Store
+**/Thumbs.db

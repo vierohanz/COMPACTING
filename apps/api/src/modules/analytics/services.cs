@@ -5,12 +5,14 @@ namespace Compacting.Api.Modules.Analytics;
 
 public interface IAnalyticsService
 {
-    Task<AnalyticsSummaryDto> GetSummaryAsync(CancellationToken cancellationToken = default);
+    Task<AnalyticsSummaryDto> GetSummaryAsync(Guid? userId = null, CancellationToken cancellationToken = default);
     Task<List<RecentCompressionItemDto>> GetRecentCompressionsAsync(
         int limit = 20,
+        Guid? userId = null,
         CancellationToken cancellationToken = default
     );
     Task<List<FormatBreakdownDto>> GetFormatBreakdownAsync(
+        Guid? userId = null,
         CancellationToken cancellationToken = default
     );
 }
@@ -25,11 +27,21 @@ public class AnalyticsService : IAnalyticsService
     }
 
     public async Task<AnalyticsSummaryDto> GetSummaryAsync(
+        Guid? userId = null,
         CancellationToken cancellationToken = default
     )
     {
-        long totalImages = await _dbContext.CompressionLogs.LongCountAsync(cancellationToken);
-        long activeKeys = await _dbContext.ApiKeys.LongCountAsync(
+        var logsQuery = _dbContext.CompressionLogs.AsQueryable();
+        var keysQuery = _dbContext.ApiKeys.AsQueryable();
+
+        if (userId.HasValue)
+        {
+            logsQuery = logsQuery.Where(l => l.UserId == userId.Value);
+            keysQuery = keysQuery.Where(k => k.UserId == userId.Value);
+        }
+
+        long totalImages = await logsQuery.LongCountAsync(cancellationToken);
+        long activeKeys = await keysQuery.LongCountAsync(
             k => !k.IsRevoked,
             cancellationToken
         );
@@ -47,23 +59,23 @@ public class AnalyticsService : IAnalyticsService
             );
         }
 
-        long totalOriginalBytes = await _dbContext.CompressionLogs.SumAsync(
+        long totalOriginalBytes = await logsQuery.SumAsync(
             l => l.OriginalSizeBytes,
             cancellationToken
         );
-        long totalCompressedBytes = await _dbContext.CompressionLogs.SumAsync(
+        long totalCompressedBytes = await logsQuery.SumAsync(
             l => l.CompressedSizeBytes,
             cancellationToken
         );
-        long totalBytesSaved = await _dbContext.CompressionLogs.SumAsync(
+        long totalBytesSaved = await logsQuery.SumAsync(
             l => l.BytesSaved,
             cancellationToken
         );
-        double avgSavingsPercent = await _dbContext.CompressionLogs.AverageAsync(
+        double avgSavingsPercent = await logsQuery.AverageAsync(
             l => l.CompressionRatioPercent,
             cancellationToken
         );
-        double avgDuration = await _dbContext.CompressionLogs.AverageAsync(
+        double avgDuration = await logsQuery.AverageAsync(
             l => l.DurationMs,
             cancellationToken
         );
@@ -81,11 +93,18 @@ public class AnalyticsService : IAnalyticsService
 
     public async Task<List<RecentCompressionItemDto>> GetRecentCompressionsAsync(
         int limit = 20,
+        Guid? userId = null,
         CancellationToken cancellationToken = default
     )
     {
-        var logs = await _dbContext
-            .CompressionLogs.OrderByDescending(l => l.CreatedAt)
+        var query = _dbContext.CompressionLogs.AsQueryable();
+        if (userId.HasValue)
+        {
+            query = query.Where(l => l.UserId == userId.Value);
+        }
+
+        var logs = await query
+            .OrderByDescending(l => l.CreatedAt)
             .Take(limit)
             .ToListAsync(cancellationToken);
 
@@ -105,11 +124,18 @@ public class AnalyticsService : IAnalyticsService
     }
 
     public async Task<List<FormatBreakdownDto>> GetFormatBreakdownAsync(
+        Guid? userId = null,
         CancellationToken cancellationToken = default
     )
     {
-        var breakdown = await _dbContext
-            .CompressionLogs.GroupBy(l => l.TargetFormat)
+        var query = _dbContext.CompressionLogs.AsQueryable();
+        if (userId.HasValue)
+        {
+            query = query.Where(l => l.UserId == userId.Value);
+        }
+
+        var breakdown = await query
+            .GroupBy(l => l.TargetFormat)
             .Select(g => new FormatBreakdownDto(g.Key, g.Count(), g.Sum(x => x.BytesSaved)))
             .ToListAsync(cancellationToken);
 

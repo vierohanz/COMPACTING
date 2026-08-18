@@ -1,4 +1,4 @@
-export type NavigationTab = 'playground' | 'apikeys' | 'analytics' | 'docs';
+export type NavigationTab = 'playground' | 'upscale' | 'apikeys' | 'analytics' | 'docs';
 
 export interface NavItem {
   id: NavigationTab;
@@ -6,7 +6,8 @@ export interface NavItem {
 }
 
 export const NAVIGATION_ITEMS: NavItem[] = [
-  { id: 'playground', label: 'Playground' },
+  { id: 'playground', label: 'Compressor' },
+  { id: 'upscale', label: 'AI Upscaler' },
   { id: 'apikeys', label: 'API Keys' },
   { id: 'analytics', label: 'Analytics' },
   { id: 'docs', label: 'Integration Docs' }

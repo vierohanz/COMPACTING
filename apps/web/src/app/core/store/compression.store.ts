@@ -29,6 +29,9 @@ export class CompressionStore {
   readonly lossless = signal<boolean>(false);
   readonly maxWidth = signal<number | null>(null);
   readonly maxHeight = signal<number | null>(null);
+  readonly scale = signal<number>(1);
+  readonly enhanceHd = signal<boolean>(false);
+  readonly sharpen = signal<number>(0);
 
   readonly apiKeys = signal<ApiKeyDto[]>([]);
   readonly isCreatingKey = signal<boolean>(false);
@@ -56,23 +59,32 @@ export class CompressionStore {
     this.compress();
   }
 
-  setPreset(type: 'speed' | 'balanced' | 'ultra' | 'lossless') {
+  setPreset(type: 'speed' | 'balanced' | 'ultra' | 'lossless' | 'hdUpscale') {
     if (type === 'speed') {
       this.quality.set(65);
       this.lossless.set(false);
-      this.targetFormat.set('WebP');
+      this.scale.set(1);
+      this.enhanceHd.set(false);
     } else if (type === 'balanced') {
       this.quality.set(80);
       this.lossless.set(false);
-      this.targetFormat.set('WebP');
+      this.scale.set(1);
+      this.enhanceHd.set(false);
     } else if (type === 'ultra') {
       this.quality.set(90);
       this.lossless.set(false);
-      this.targetFormat.set('WebP');
+      this.scale.set(1);
+      this.enhanceHd.set(false);
     } else if (type === 'lossless') {
       this.quality.set(100);
       this.lossless.set(true);
-      this.targetFormat.set('WebP');
+      this.scale.set(1);
+      this.enhanceHd.set(false);
+    } else if (type === 'hdUpscale') {
+      this.quality.set(90);
+      this.lossless.set(false);
+      this.scale.set(2);
+      this.enhanceHd.set(true);
     }
 
     if (this.selectedFile()) {
@@ -90,7 +102,10 @@ export class CompressionStore {
       maxWidth: this.maxWidth() || undefined,
       maxHeight: this.maxHeight() || undefined,
       stripMetadata: this.stripMetadata(),
-      lossless: this.lossless()
+      lossless: this.lossless(),
+      scale: this.scale(),
+      enhanceHd: this.enhanceHd(),
+      sharpen: this.sharpen()
     };
 
     this.isCompressing.set(true);
@@ -128,20 +143,28 @@ export class CompressionStore {
     });
   }
 
+  readonly analyticsScope = signal<'personal' | 'global'>('personal');
+
   revokeKey(id: string) {
     this.api.revokeApiKey(id).subscribe({
       next: () => this.loadApiKeys()
     });
   }
 
-  loadAnalytics() {
-    this.api.getAnalyticsSummary().subscribe({
+  setAnalyticsScope(scope: 'personal' | 'global') {
+    this.analyticsScope.set(scope);
+    this.loadAnalytics(scope === 'global');
+  }
+
+  loadAnalytics(global?: boolean) {
+    const isGlobal = global !== undefined ? global : this.analyticsScope() === 'global';
+    this.api.getAnalyticsSummary(isGlobal).subscribe({
       next: data => this.summary.set(data)
     });
-    this.api.getRecentCompressions().subscribe({
+    this.api.getRecentCompressions(20, isGlobal).subscribe({
       next: data => this.recentCompressions.set(data)
     });
-    this.api.getFormatBreakdown().subscribe({
+    this.api.getFormatBreakdown(isGlobal).subscribe({
       next: data => this.formatBreakdown.set(data)
     });
   }

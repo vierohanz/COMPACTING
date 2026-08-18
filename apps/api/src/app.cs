@@ -260,6 +260,7 @@ public static class AppSetup
 
                 CREATE TABLE IF NOT EXISTS compression_logs (
                     id UUID PRIMARY KEY,
+                    user_id UUID,
                     api_key_id UUID,
                     original_file_name VARCHAR(500) NOT NULL,
                     source_format VARCHAR(20) NOT NULL,
@@ -278,7 +279,20 @@ public static class AppSetup
                 CREATE INDEX IF NOT EXISTS idx_compression_logs_api_key_id ON compression_logs (api_key_id);
             ";
             db.Database.ExecuteSqlRaw(createSnakeCaseSql);
-            Log.Success("Database schema migrated to snake_case successfully.");
+
+            try
+            {
+                db.Database.ExecuteSqlRaw("ALTER TABLE api_keys ADD COLUMN IF NOT EXISTS user_id UUID;");
+                db.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS idx_api_keys_user_id ON api_keys (user_id);");
+                db.Database.ExecuteSqlRaw("ALTER TABLE compression_logs ADD COLUMN IF NOT EXISTS user_id UUID;");
+                db.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS idx_compression_logs_user_id ON compression_logs (user_id);");
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"User isolation column check: {ex.Message}");
+            }
+
+            Log.Success("Database schema migrated to snake_case with user isolation successfully.");
         }
         catch (Exception ex)
         {
@@ -296,6 +310,8 @@ public static class AppSetup
         });
 
         app.UseCors("AllowAll");
+        app.UseDefaultFiles();
+        app.UseStaticFiles();
         app.UseMiddleware<ApiKeyAuthMiddleware>();
         app.UseAuthentication();
         app.UseAuthorization();

@@ -7,69 +7,75 @@ import { Component, signal } from '@angular/core';
   imports: [CommonModule],
   template: `
     <section class="space-y-6">
-      <div class="rounded-xl border border-slate-200/80 bg-white shadow-xs p-6 space-y-5">
-        <div class="space-y-1">
-          <h2 class="text-base font-semibold tracking-tight text-slate-900">
-            External Web & API Integration
-          </h2>
-          <p class="text-xs text-slate-500">
-            Connect your WordPress, Laravel, Next.js, Node.js, Python, or PHP apps to COMPACTING.
+      <div class="rounded-2xl border border-[#242e42] bg-[#0e121a] shadow-xl p-6 sm:p-8 space-y-6">
+        <div class="space-y-1 border-b border-[#1b2232] pb-4">
+          <div class="flex items-center gap-2">
+            <h2 class="text-base font-black tracking-wide text-white">
+              External Web & API Integration
+            </h2>
+            <span
+              class="inline-flex items-center rounded-md border border-[#00d2ff]/40 bg-[#00d2ff]/10 px-2 py-0.5 text-[10px] font-extrabold text-[#00d2ff]"
+              >SDK SUITE</span
+            >
+          </div>
+          <p class="text-xs text-slate-400">
+            Connect your WordPress, Laravel, Next.js, Node.js, Python, or PHP apps to the COMPACTING Spider Engine.
           </p>
         </div>
 
         <div
-          class="inline-flex h-9 items-center justify-center rounded-lg bg-slate-100 p-1 text-slate-500"
+          class="inline-flex h-10 items-center justify-center rounded-xl bg-[#080a0f] border border-[#1b2232] p-1 text-slate-400 overflow-x-auto"
         >
           <button
-            class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium transition-all"
+            class="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer"
             [ngClass]="
               selectedCodeLanguage() === 'curl'
-                ? 'bg-white text-slate-950 shadow-xs font-semibold'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-[#ef233c] text-white shadow-md shadow-[#ef233c]/20'
+                : 'text-slate-400 hover:text-white hover:bg-[#141a26]'
             "
             (click)="selectedCodeLanguage.set('curl')"
           >
             cURL
           </button>
           <button
-            class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium transition-all"
+            class="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer"
             [ngClass]="
               selectedCodeLanguage() === 'js'
-                ? 'bg-white text-slate-950 shadow-xs font-semibold'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-[#ef233c] text-white shadow-md shadow-[#ef233c]/20'
+                : 'text-slate-400 hover:text-white hover:bg-[#141a26]'
             "
             (click)="selectedCodeLanguage.set('js')"
           >
             JavaScript / Fetch
           </button>
           <button
-            class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium transition-all"
+            class="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer"
             [ngClass]="
               selectedCodeLanguage() === 'php'
-                ? 'bg-white text-slate-950 shadow-xs font-semibold'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-[#ef233c] text-white shadow-md shadow-[#ef233c]/20'
+                : 'text-slate-400 hover:text-white hover:bg-[#141a26]'
             "
             (click)="selectedCodeLanguage.set('php')"
           >
             PHP
           </button>
           <button
-            class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium transition-all"
+            class="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer"
             [ngClass]="
               selectedCodeLanguage() === 'python'
-                ? 'bg-white text-slate-950 shadow-xs font-semibold'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-[#ef233c] text-white shadow-md shadow-[#ef233c]/20'
+                : 'text-slate-400 hover:text-white hover:bg-[#141a26]'
             "
             (click)="selectedCodeLanguage.set('python')"
           >
             Python
           </button>
           <button
-            class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium transition-all"
+            class="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer"
             [ngClass]="
               selectedCodeLanguage() === 'csharp'
-                ? 'bg-white text-slate-950 shadow-xs font-semibold'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-[#ef233c] text-white shadow-md shadow-[#ef233c]/20'
+                : 'text-slate-400 hover:text-white hover:bg-[#141a26]'
             "
             (click)="selectedCodeLanguage.set('csharp')"
           >
@@ -77,7 +83,7 @@ import { Component, signal } from '@angular/core';
           </button>
         </div>
 
-        <div class="rounded-lg border border-slate-800 bg-slate-950 p-4.5 overflow-x-auto">
+        <div class="rounded-xl border border-[#242e42] bg-[#080a0f] p-5 overflow-x-auto shadow-2xl">
           <pre
             *ngIf="selectedCodeLanguage() === 'curl'"
             class="text-xs font-mono text-slate-100 leading-relaxed m-0"
@@ -160,3 +166,4 @@ var response = await client.PostAsync("http://localhost:5126/api/v1/compression/
 var compressedBytes = await response.Content.ReadAsByteArrayAsync();
 await File.WriteAllBytesAsync("photo.webp", compressedBytes);`;
 }
+
