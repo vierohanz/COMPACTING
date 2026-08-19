@@ -22,11 +22,17 @@ public interface IApiKeyService
 public class ApiKeyService : IApiKeyService
 {
     private readonly AppDbContext _dbContext;
+    private readonly ICacheService _cacheService;
     private readonly ILogger<ApiKeyService> _logger;
 
-    public ApiKeyService(AppDbContext dbContext, ILogger<ApiKeyService> logger)
+    public ApiKeyService(
+        AppDbContext dbContext,
+        ICacheService cacheService,
+        ILogger<ApiKeyService> logger
+    )
     {
         _dbContext = dbContext;
+        _cacheService = cacheService;
         _logger = logger;
     }
 
@@ -35,7 +41,7 @@ public class ApiKeyService : IApiKeyService
         CancellationToken cancellationToken = default
     )
     {
-        var query = _dbContext.ApiKeys.AsQueryable();
+        var query = _dbContext.ApiKeys.AsNoTracking();
         if (userId.HasValue)
         {
             query = query.Where(k => k.UserId == userId.Value);
@@ -43,9 +49,7 @@ public class ApiKeyService : IApiKeyService
 
         var keys = await query
             .OrderByDescending(k => k.CreatedAt)
-            .ToListAsync(cancellationToken);
-
-        return keys.Select(k => new ApiKeyDto(
+            .Select(k => new ApiKeyDto(
                 k.Id,
                 k.Name,
                 k.KeyPrefix,
@@ -56,7 +60,9 @@ public class ApiKeyService : IApiKeyService
                 k.TotalRequests,
                 k.TotalBytesSaved
             ))
-            .ToList();
+            .ToListAsync(cancellationToken);
+
+        return keys;
     }
 
     public async Task<ApiKeyCreatedResponseDto> CreateKeyAsync(
@@ -110,6 +116,9 @@ public class ApiKeyService : IApiKeyService
 
         key.IsRevoked = true;
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        await _cacheService.RemoveAsync($"apikey:hash:{key.KeyHash}", cancellationToken);
+
         return true;
     }
 
@@ -122,6 +131,19 @@ public class ApiKeyService : IApiKeyService
             return null;
 
         string keyHash = SecurityUtil.HashSha256(rawApiKey.Trim());
+        string cacheKey = $"apikey:hash:{keyHash}";
+
+        var cached = await _cacheService.GetAsync<ApiKeyEntity>(cacheKey, cancellationToken);
+        if (cached != null)
+        {
+            if (cached.ExpiresAt.HasValue && cached.ExpiresAt.Value < DateTime.UtcNow)
+            {
+                await _cacheService.RemoveAsync(cacheKey, cancellationToken);
+                return null;
+            }
+            return cached;
+        }
+
         var key = await _dbContext
             .ApiKeys.AsNoTracking()
             .FirstOrDefaultAsync(k => k.KeyHash == keyHash && !k.IsRevoked, cancellationToken);
@@ -133,6 +155,8 @@ public class ApiKeyService : IApiKeyService
         {
             return null;
         }
+
+        await _cacheService.SetAsync(cacheKey, key, TimeSpan.FromMinutes(10), cancellationToken);
 
         return key;
     }

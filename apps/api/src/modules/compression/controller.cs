@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Compacting.Api.Modules.Compression;
@@ -6,6 +7,9 @@ namespace Compacting.Api.Modules.Compression;
 [Route("api/v1/compression")]
 public class CompressionController : ControllerBase
 {
+    private const long MaxSingleFileSizeBytes = 50 * 1024 * 1024;
+    private const int MaxBatchFilesCount = 50;
+
     private readonly ICompressionService _compressionService;
     private readonly ILogger<CompressionController> _logger;
 
@@ -18,9 +22,6 @@ public class CompressionController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Compress an image file directly. Returns binary stream or JSON metadata if ?json=true.
-    /// </summary>
     [HttpPost("compress")]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
@@ -35,6 +36,11 @@ public class CompressionController : ControllerBase
         if (file == null || file.Length == 0)
         {
             return BadRequest(new { error = "No image file provided." });
+        }
+
+        if (file.Length > MaxSingleFileSizeBytes)
+        {
+            return BadRequest(new { error = "File exceeds the 50MB maximum allowed upload limit." });
         }
 
         var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
@@ -58,7 +64,7 @@ public class CompressionController : ControllerBase
         bool prefersJson =
             (json == true)
             || (
-                Request.Headers.Accept.ToString().Contains("application/json")
+                Request.Headers.Accept.ToString().Contains("application/json", StringComparison.OrdinalIgnoreCase)
                 && options.ReturnBase64
             );
 
@@ -67,24 +73,21 @@ public class CompressionController : ControllerBase
             return Ok(processed.Metadata);
         }
 
-        Response.Headers.Append("X-Original-Size", processed.Metadata.OriginalSizeBytes.ToString());
+        Response.Headers.Append("X-Original-Size", processed.Metadata.OriginalSizeBytes.ToString(CultureInfo.InvariantCulture));
         Response.Headers.Append(
             "X-Compressed-Size",
-            processed.Metadata.CompressedSizeBytes.ToString()
+            processed.Metadata.CompressedSizeBytes.ToString(CultureInfo.InvariantCulture)
         );
-        Response.Headers.Append("X-Bytes-Saved", processed.Metadata.BytesSaved.ToString());
+        Response.Headers.Append("X-Bytes-Saved", processed.Metadata.BytesSaved.ToString(CultureInfo.InvariantCulture));
         Response.Headers.Append(
             "X-Compression-Ratio",
-            $"{processed.Metadata.CompressionRatioPercent}%"
+            $"{processed.Metadata.CompressionRatioPercent.ToString(CultureInfo.InvariantCulture)}%"
         );
-        Response.Headers.Append("X-Duration-Ms", processed.Metadata.DurationMs.ToString());
+        Response.Headers.Append("X-Duration-Ms", processed.Metadata.DurationMs.ToString(CultureInfo.InvariantCulture));
 
         return File(processed.Data, processed.ContentType, processed.FileName);
     }
 
-    /// <summary>
-    /// Compress image and return JSON payload with Base64 output data and analytical metrics.
-    /// </summary>
     [HttpPost("compress-json")]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(CompressionResultDto), StatusCodes.Status200OK)]
@@ -97,6 +100,11 @@ public class CompressionController : ControllerBase
         if (file == null || file.Length == 0)
         {
             return BadRequest(new { error = "No image file provided." });
+        }
+
+        if (file.Length > MaxSingleFileSizeBytes)
+        {
+            return BadRequest(new { error = "File exceeds the 50MB maximum allowed upload limit." });
         }
 
         options.ReturnBase64 = true;
@@ -121,9 +129,6 @@ public class CompressionController : ControllerBase
         return Ok(processed.Metadata);
     }
 
-    /// <summary>
-    /// Compress multiple images in batch and receive list of compression results.
-    /// </summary>
     [HttpPost("batch")]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(List<CompressionResultDto>), StatusCodes.Status200OK)]
@@ -138,6 +143,11 @@ public class CompressionController : ControllerBase
             return BadRequest(new { error = "No image files provided for batch processing." });
         }
 
+        if (files.Count > MaxBatchFilesCount)
+        {
+            return BadRequest(new { error = $"Batch size exceeds maximum limit of {MaxBatchFilesCount} files." });
+        }
+
         options.ReturnBase64 = true;
         var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
         Guid? apiKeyId =
@@ -146,27 +156,32 @@ public class CompressionController : ControllerBase
                 : null;
         Guid? currentUserId = GetCurrentUserId();
 
-        var streams = new List<(Stream Stream, string FileName)>();
-        foreach (var file in files)
+        var streams = new List<(Stream Stream, string FileName)>(files.Count);
+        try
         {
-            streams.Add((file.OpenReadStream(), file.FileName));
+            foreach (var file in files)
+            {
+                streams.Add((file.OpenReadStream(), file.FileName));
+            }
+
+            var results = await _compressionService.CompressBatchAsync(
+                streams,
+                options,
+                apiKeyId,
+                clientIp,
+                currentUserId,
+                cancellationToken
+            );
+
+            return Ok(results.Select(r => r.Metadata).ToList());
         }
-
-        var results = await _compressionService.CompressBatchAsync(
-            streams,
-            options,
-            apiKeyId,
-            clientIp,
-            currentUserId,
-            cancellationToken
-        );
-
-        foreach (var (stream, _) in streams)
+        finally
         {
-            await stream.DisposeAsync();
+            foreach (var (stream, _) in streams)
+            {
+                await stream.DisposeAsync();
+            }
         }
-
-        return Ok(results.Select(r => r.Metadata).ToList());
     }
 
     private Guid? GetCurrentUserId()

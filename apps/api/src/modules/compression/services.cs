@@ -214,56 +214,63 @@ public class CompressionService : ICompressionService
         CancellationToken cancellationToken = default
     )
     {
-        var results = new List<CompressionProcessedFile>();
+        var fileList = files.ToList();
+        var results = new CompressionProcessedFile[fileList.Count];
+        var maxParallelism = Math.Max(2, Environment.ProcessorCount);
+        using var throttler = new SemaphoreSlim(maxParallelism);
 
-        foreach (var (stream, fileName) in files)
+        var tasks = fileList.Select(async (item, index) =>
         {
+            await throttler.WaitAsync(cancellationToken);
             try
             {
                 var processed = await CompressAsync(
-                    stream,
-                    fileName,
+                    item.Stream,
+                    item.FileName,
                     options,
                     apiKeyId,
                     clientIp,
                     userId,
                     cancellationToken
                 );
-                results.Add(processed);
+                results[index] = processed;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error compressing file {FileName} in batch", fileName);
-                results.Add(
-                    new CompressionProcessedFile
-                    {
-                        Data = Array.Empty<byte>(),
-                        ContentType = "application/octet-stream",
-                        FileName = fileName,
-                        Metadata = new CompressionResultDto(
-                            Success: false,
-                            FileName: fileName,
-                            SourceFormat: "Unknown",
-                            TargetFormat: "Unknown",
-                            ContentType: "application/octet-stream",
-                            OriginalSizeBytes: stream.Length,
-                            CompressedSizeBytes: stream.Length,
-                            BytesSaved: 0,
-                            CompressionRatioPercent: 0,
-                            Width: 0,
-                            Height: 0,
-                            DurationMs: 0,
-                            ErrorMessage: ex.Message
-                        ),
-                    }
-                );
+                _logger.LogError(ex, "Error compressing file {FileName} in batch", item.FileName);
+                results[index] = new CompressionProcessedFile
+                {
+                    Data = Array.Empty<byte>(),
+                    ContentType = "application/octet-stream",
+                    FileName = Path.GetFileName(item.FileName),
+                    Metadata = new CompressionResultDto(
+                        Success: false,
+                        FileName: Path.GetFileName(item.FileName),
+                        SourceFormat: "Unknown",
+                        TargetFormat: "Unknown",
+                        ContentType: "application/octet-stream",
+                        OriginalSizeBytes: item.Stream.CanSeek ? item.Stream.Length : 0,
+                        CompressedSizeBytes: 0,
+                        BytesSaved: 0,
+                        CompressionRatioPercent: 0,
+                        Width: 0,
+                        Height: 0,
+                        DurationMs: 0,
+                        ErrorMessage: ex.Message
+                    ),
+                };
             }
-        }
+            finally
+            {
+                throttler.Release();
+            }
+        });
 
-        return results;
+        await Task.WhenAll(tasks);
+        return results.ToList();
     }
 
-    private (
+    private static (
         ImageEncoder Encoder,
         string Extension,
         string ContentType,

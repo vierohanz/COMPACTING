@@ -3,6 +3,7 @@ import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthStore } from '../../core/store/auth.store';
 import { CompressionStore } from '../../core/store/compression.store';
+import { CompressionResult } from '../../shared/models/compression.model';
 import { formatBytes } from '../../core/utils/utils';
 import { CustomSelectComponent, SelectOption } from '../../shared/components/custom-select/custom-select.component';
 import { SpiderBadgeComponent } from '../../shared/components/spider-badge/spider-badge.component';
@@ -102,6 +103,33 @@ import { SpiderBadgeComponent } from '../../shared/components/spider-badge/spide
               </p>
             </div>
 
+            <!-- Mode Switcher -->
+            <div class="flex items-center gap-1.5 p-1 rounded-xl bg-[#040914] border border-[#132d52]">
+              <button
+                class="flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer text-center"
+                [ngClass]="
+                  store.mode() === 'single'
+                    ? 'bg-[#e21b24] text-white shadow-md shadow-[#e21b24]/30'
+                    : 'text-slate-400 hover:text-white'
+                "
+                (click)="store.setMode('single')"
+              >
+                Single Image
+              </button>
+              <button
+                class="flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer text-center flex items-center justify-center gap-1.5"
+                [ngClass]="
+                  store.mode() === 'batch'
+                    ? 'bg-[#e21b24] text-white shadow-md shadow-[#e21b24]/30'
+                    : 'text-slate-400 hover:text-white'
+                "
+                (click)="store.setMode('batch')"
+              >
+                <span>Batch Processing</span>
+                <span class="text-[10px] bg-white/20 px-1.5 py-0.2 rounded font-mono">MULTI</span>
+              </button>
+            </div>
+
             <!-- Dropzone Upload Area -->
             <div
               class="rounded-xl border-2 border-dashed border-[#e21b24]/40 hover:border-[#e21b24] bg-[#0c1e38] hover:bg-[#132d52] p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-3 group shadow-inner"
@@ -113,6 +141,7 @@ import { SpiderBadgeComponent } from '../../shared/components/spider-badge/spide
                 #fileInput
                 type="file"
                 (change)="onFileChange($event)"
+                [multiple]="store.mode() === 'batch'"
                 accept="image/*"
                 style="display: none;"
               />
@@ -134,11 +163,20 @@ import { SpiderBadgeComponent } from '../../shared/components/spider-badge/spide
               </div>
               <div>
                 <p class="text-xs font-bold text-slate-100">
-                  {{
-                    store.selectedFile()
-                      ? store.selectedFile()?.name
-                      : 'Drop image here or click to browse'
-                  }}
+                  <ng-container *ngIf="store.mode() === 'single'">
+                    {{
+                      store.selectedFile()
+                        ? store.selectedFile()?.name
+                        : 'Drop single image or click to browse'
+                    }}
+                  </ng-container>
+                  <ng-container *ngIf="store.mode() === 'batch'">
+                    {{
+                      store.batchFiles().length > 0
+                        ? store.batchFiles().length + ' images selected for batch'
+                        : 'Drop multiple images here or click to batch upload'
+                    }}
+                  </ng-container>
                 </p>
                 <span class="text-[11px] text-slate-400 font-medium mt-0.5 block"
                   >Supports JPEG, PNG, WebP, GIF, BMP, TIFF</span
@@ -211,12 +249,12 @@ import { SpiderBadgeComponent } from '../../shared/components/spider-badge/spide
                   min="1"
                   max="100"
                   [ngModel]="store.quality()"
-                  (ngModelChange)="store.quality.set($event); store.scale.set(1); store.enhanceHd.set(false); store.compress()"
+                  (ngModelChange)="store.quality.set($event); store.scale.set(1); store.enhanceHd.set(false); recompress()"
                   class="w-full accent-[#e21b24] cursor-pointer h-2 bg-[#040914] rounded-lg appearance-none"
                 />
               </div>
 
-              <!-- Custom Spider-Man Styled Dropdown -->
+              <!-- Custom Dropdown -->
               <div>
                 <app-custom-select
                   label="Target Output Format"
@@ -232,7 +270,7 @@ import { SpiderBadgeComponent } from '../../shared/components/spider-badge/spide
                   <input
                     type="number"
                     [ngModel]="store.maxWidth()"
-                    (ngModelChange)="store.maxWidth.set($event); store.scale.set(1); store.compress()"
+                    (ngModelChange)="store.maxWidth.set($event); store.scale.set(1); recompress()"
                     placeholder="Auto"
                     class="flex h-10 w-full rounded-xl border border-[#132d52] bg-[#0c1e38] px-3.5 py-2 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e21b24] text-white placeholder:text-slate-500"
                   />
@@ -242,7 +280,7 @@ import { SpiderBadgeComponent } from '../../shared/components/spider-badge/spide
                   <input
                     type="number"
                     [ngModel]="store.maxHeight()"
-                    (ngModelChange)="store.maxHeight.set($event); store.scale.set(1); store.compress()"
+                    (ngModelChange)="store.maxHeight.set($event); store.scale.set(1); recompress()"
                     placeholder="Auto"
                     class="flex h-10 w-full rounded-xl border border-[#132d52] bg-[#0c1e38] px-3.5 py-2 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e21b24] text-white placeholder:text-slate-500"
                   />
@@ -258,7 +296,7 @@ import { SpiderBadgeComponent } from '../../shared/components/spider-badge/spide
               type="checkbox"
               id="stripExif"
               [ngModel]="store.stripMetadata()"
-              (ngModelChange)="store.stripMetadata.set($event); store.compress()"
+              (ngModelChange)="store.stripMetadata.set($event); recompress()"
               class="h-4 w-4 rounded border-[#132d52] bg-[#040914] text-[#e21b24] accent-[#e21b24] focus:ring-[#e21b24]"
             />
             <label for="stripExif" class="cursor-pointer select-none">
@@ -270,11 +308,12 @@ import { SpiderBadgeComponent } from '../../shared/components/spider-badge/spide
           </div>
         </div>
 
-        <!-- Right Visual Studio & Comparison Panel -->
+        <!-- Right Visual Studio & Comparison / Batch Gallery Panel -->
         <div
           class="lg:col-span-8 xl:col-span-8 rounded-2xl border border-[#132d52] bg-[#071324] shadow-2xl p-6 sm:p-7 flex flex-col justify-between gap-6 h-full"
         >
-          <div class="flex flex-col gap-5 flex-1">
+          <!-- SINGLE IMAGE MODE VIEW -->
+          <div *ngIf="store.mode() === 'single'" class="flex flex-col gap-5 flex-1">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#132d52] pb-4">
               <div class="flex items-center gap-3">
                 <h3 class="text-base font-black tracking-wide text-white">
@@ -291,7 +330,7 @@ import { SpiderBadgeComponent } from '../../shared/components/spider-badge/spide
               <div *ngIf="store.previewCompressedUrl()">
                 <button
                   class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-xs font-black transition-all bg-[#e21b24] hover:bg-[#b50e16] text-white shadow-lg shadow-[#e21b24]/25 border border-[#e21b24] h-9 px-4 cursor-pointer active:scale-98"
-                  (click)="download()"
+                  (click)="downloadSingle()"
                 >
                   <svg
                     width="14"
@@ -360,7 +399,6 @@ import { SpiderBadgeComponent } from '../../shared/components/spider-badge/spide
                   class="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-30 m-0 p-0"
                 />
 
-                <!-- Solid Badges (NO GLASS) -->
                 <div
                   class="absolute top-3 left-3 bg-[#071324] border border-[#132d52] text-slate-200 text-[11px] font-bold px-3 py-1 rounded-lg z-20 shadow-md"
                 >
@@ -404,9 +442,125 @@ import { SpiderBadgeComponent } from '../../shared/components/spider-badge/spide
                 </div>
               </div>
             </div>
+          </div>
 
-            <!-- Empty State -->
-            <ng-template #emptyState>
+          <!-- BATCH MODE VIEW -->
+          <div *ngIf="store.mode() === 'batch'" class="flex flex-col gap-5 flex-1">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#132d52] pb-4">
+              <div class="flex items-center gap-3">
+                <h3 class="text-base font-black tracking-wide text-white">
+                  Batch Neural Processing Gallery
+                </h3>
+                <span
+                  *ngIf="store.batchResults().length > 0"
+                  class="inline-flex items-center rounded-full border border-[#e21b24]/50 bg-[#e21b24]/15 px-3 py-0.5 text-xs font-extrabold text-[#e21b24] shadow-xs"
+                >
+                  {{ store.batchSavedPercent() }}% Total Saved
+                </span>
+              </div>
+
+              <div *ngIf="store.batchResults().length > 0">
+                <button
+                  class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-xs font-black transition-all bg-[#e21b24] hover:bg-[#b50e16] text-white shadow-lg shadow-[#e21b24]/25 border border-[#e21b24] h-9 px-4 cursor-pointer active:scale-98"
+                  (click)="downloadAllBatch()"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                  </svg>
+                  <span>Download All ({{ store.batchResults().length }})</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Batch Results List or Empty State -->
+            <div *ngIf="store.batchResults().length > 0; else batchEmptyState" class="space-y-4 flex-1">
+              <!-- Aggregate summary banner -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="p-3 bg-[#0c1e38] border border-[#132d52] rounded-xl">
+                  <span class="text-[10px] font-bold text-slate-400 block uppercase">Total Files</span>
+                  <span class="text-sm font-bold text-white font-mono mt-0.5 block">
+                    {{ store.batchResults().length }} images
+                  </span>
+                </div>
+                <div class="p-3 bg-[#0c1e38] border border-[#132d52] rounded-xl">
+                  <span class="text-[10px] font-bold text-slate-400 block uppercase">Original Size</span>
+                  <span class="text-sm font-bold text-white font-mono mt-0.5 block">
+                    {{ formatBytes(store.totalBatchOriginalBytes()) }}
+                  </span>
+                </div>
+                <div class="p-3 bg-[#0c1e38] border border-[#e21b24]/40 rounded-xl">
+                  <span class="text-[10px] font-bold text-[#e21b24] block uppercase">Bytes Saved</span>
+                  <span class="text-sm font-bold text-[#e21b24] font-mono mt-0.5 block">
+                    {{ formatBytes(store.totalBatchBytesSaved()) }}
+                  </span>
+                </div>
+                <div class="p-3 bg-[#0c1e38] border border-[#ffcc00]/40 rounded-xl">
+                  <span class="text-[10px] font-bold text-[#ffcc00] block uppercase">Avg Ratio</span>
+                  <span class="text-sm font-bold text-[#ffcc00] font-mono mt-0.5 block">
+                    {{ store.batchSavedPercent() }}% reduction
+                  </span>
+                </div>
+              </div>
+
+              <!-- Scrollable Batch Items Grid -->
+              <div class="max-h-96 overflow-y-auto space-y-2 pr-1">
+                <div
+                  *ngFor="let item of store.batchResults()"
+                  class="flex items-center justify-between gap-4 p-3 rounded-xl bg-[#0c1e38] border border-[#132d52] hover:border-[#e21b24]/50 transition-all"
+                >
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div
+                      class="w-10 h-10 rounded-lg bg-[#040914] border border-[#132d52] flex items-center justify-center shrink-0 overflow-hidden"
+                    >
+                      <img
+                        *ngIf="item.base64Data"
+                        [src]="'data:' + item.contentType + ';base64,' + item.base64Data"
+                        class="w-full h-full object-cover"
+                        [alt]="item.fileName"
+                      />
+                      <span *ngIf="!item.base64Data" class="text-[10px] text-slate-500 font-mono">FILE</span>
+                    </div>
+                    <div class="min-w-0">
+                      <p class="text-xs font-bold text-white truncate">{{ item.fileName }}</p>
+                      <div class="flex items-center gap-2 text-[11px] text-slate-400 font-mono mt-0.5">
+                        <span>{{ formatBytes(item.originalSizeBytes) }}</span>
+                        <span>&rarr;</span>
+                        <span class="text-[#e21b24] font-bold">{{ formatBytes(item.compressedSizeBytes) }}</span>
+                        <span>·</span>
+                        <span>{{ item.durationMs }}ms</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2 shrink-0">
+                    <span
+                      class="text-[11px] font-black font-mono px-2 py-0.5 rounded bg-[#e21b24]/15 text-[#e21b24] border border-[#e21b24]/30"
+                    >
+                      -{{ item.compressionRatioPercent }}%
+                    </span>
+                    <button
+                      *ngIf="item.base64Data"
+                      class="p-2 rounded-lg bg-[#071324] hover:bg-[#e21b24] text-slate-300 hover:text-white border border-[#132d52] transition-colors cursor-pointer"
+                      (click)="downloadItem(item)"
+                      title="Download file"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <ng-template #batchEmptyState>
               <div
                 class="w-full flex-1 min-h-135 h-full rounded-2xl border-2 border-dashed border-[#132d52] bg-[#0c1e38]/50 flex flex-col items-center justify-center p-8 text-center"
               >
@@ -426,13 +580,41 @@ import { SpiderBadgeComponent } from '../../shared/components/spider-badge/spide
                     <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
                   </svg>
                 </div>
-                <h4 class="text-base font-bold text-white">No Image Selected</h4>
+                <h4 class="text-base font-bold text-white">No Batch Files Uploaded</h4>
                 <p class="text-xs text-slate-400 max-w-sm mt-1.5 leading-relaxed">
-                  Upload an image on the left studio to see instant visual compression and compare quality side-by-side.
+                  Select or drag-and-drop multiple images on the left panel to batch compress and optimize simultaneously.
                 </p>
               </div>
             </ng-template>
           </div>
+
+          <!-- Empty State for Single mode -->
+          <ng-template #emptyState>
+            <div
+              class="w-full flex-1 min-h-135 h-full rounded-2xl border-2 border-dashed border-[#132d52] bg-[#0c1e38]/50 flex flex-col items-center justify-center p-8 text-center"
+            >
+              <div
+                class="w-16 h-16 rounded-2xl bg-[#071324] border border-[#132d52] flex items-center justify-center text-[#e21b24] shadow-lg mb-4"
+              >
+                <svg
+                  width="32"
+                  height="32"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                >
+                  <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                  <circle cx="9" cy="9" r="2" />
+                  <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                </svg>
+              </div>
+              <h4 class="text-base font-bold text-white">No Image Selected</h4>
+              <p class="text-xs text-slate-400 max-w-sm mt-1.5 leading-relaxed">
+                Upload an image on the left studio to see instant visual compression and compare quality side-by-side.
+              </p>
+            </div>
+          </ng-template>
         </div>
       </section>
     </div>
@@ -450,17 +632,29 @@ export class PlaygroundComponent {
     { label: 'GIF', value: 'Gif', description: 'Animated graphic format' }
   ];
 
+  recompress() {
+    if (this.store.mode() === 'single') {
+      this.store.compress();
+    } else {
+      this.store.compressBatch();
+    }
+  }
+
   onFormatChange(format: string) {
     this.store.targetFormat.set(format as 'WebP' | 'Jpeg' | 'Png' | 'Gif');
     this.store.scale.set(1);
     this.store.enhanceHd.set(false);
-    this.store.compress();
+    this.recompress();
   }
 
   onFileChange(event: Event) {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-      this.store.setFile(input.files[0]);
+    if (input.files && input.files.length > 0) {
+      if (this.store.mode() === 'batch') {
+        this.store.setBatchFiles(Array.from(input.files));
+      } else {
+        this.store.setFile(input.files[0]);
+      }
     }
   }
 
@@ -472,12 +666,16 @@ export class PlaygroundComponent {
   onFileDropped(event: DragEvent) {
     event.preventDefault();
     event.stopPropagation();
-    if (event.dataTransfer?.files && event.dataTransfer.files[0]) {
-      this.store.setFile(event.dataTransfer.files[0]);
+    if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
+      if (this.store.mode() === 'batch') {
+        this.store.setBatchFiles(Array.from(event.dataTransfer.files));
+      } else {
+        this.store.setFile(event.dataTransfer.files[0]);
+      }
     }
   }
 
-  download() {
+  downloadSingle() {
     const url = this.store.previewCompressedUrl();
     if (!url) return;
     const a = document.createElement('a');
@@ -486,6 +684,24 @@ export class PlaygroundComponent {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+  }
+
+  downloadItem(item: CompressionResult) {
+    if (!item.base64Data) return;
+    const a = document.createElement('a');
+    a.href = `data:${item.contentType};base64,${item.base64Data}`;
+    a.download = item.fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  downloadAllBatch() {
+    for (const item of this.store.batchResults()) {
+      if (item.base64Data) {
+        this.downloadItem(item);
+      }
+    }
   }
 }
 

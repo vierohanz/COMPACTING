@@ -14,10 +14,15 @@ import { ApiService } from '../services/api.service';
 })
 export class CompressionStore {
   private api = inject(ApiService);
+  private currentObjectUrl: string | null = null;
 
   readonly activeTab = signal<NavigationTab>('playground');
+  readonly mode = signal<'single' | 'batch'>('single');
   readonly isCompressing = signal<boolean>(false);
+  readonly isBatchCompressing = signal<boolean>(false);
   readonly selectedFile = signal<File | null>(null);
+  readonly batchFiles = signal<File[]>([]);
+  readonly batchResults = signal<CompressionResult[]>([]);
   readonly previewOriginalUrl = signal<string | null>(null);
   readonly previewCompressedUrl = signal<string | null>(null);
   readonly compressionResult = signal<CompressionResult | null>(null);
@@ -45,18 +50,48 @@ export class CompressionStore {
     return this.compressionResult()?.compressionRatioPercent ?? 0;
   });
 
+  readonly totalBatchBytesSaved = computed(() => {
+    return this.batchResults().reduce((acc, curr) => acc + (curr.bytesSaved || 0), 0);
+  });
+
+  readonly totalBatchOriginalBytes = computed(() => {
+    return this.batchResults().reduce((acc, curr) => acc + (curr.originalSizeBytes || 0), 0);
+  });
+
+  readonly batchSavedPercent = computed(() => {
+    const orig = this.totalBatchOriginalBytes();
+    if (orig === 0) return 0;
+    return Math.round((this.totalBatchBytesSaved() / orig) * 100);
+  });
+
   setTab(tab: NavigationTab) {
     this.activeTab.set(tab);
     if (tab === 'analytics') this.loadAnalytics();
     if (tab === 'apikeys') this.loadApiKeys();
   }
 
+  setMode(mode: 'single' | 'batch') {
+    this.mode.set(mode);
+  }
+
   setFile(file: File) {
+    if (this.currentObjectUrl) {
+      URL.revokeObjectURL(this.currentObjectUrl);
+    }
+    this.currentObjectUrl = URL.createObjectURL(file);
     this.selectedFile.set(file);
-    this.previewOriginalUrl.set(URL.createObjectURL(file));
+    this.previewOriginalUrl.set(this.currentObjectUrl);
     this.previewCompressedUrl.set(null);
     this.compressionResult.set(null);
     this.compress();
+  }
+
+  setBatchFiles(files: File[]) {
+    this.batchFiles.set(files);
+    this.batchResults.set([]);
+    if (files.length > 0) {
+      this.compressBatch();
+    }
   }
 
   setPreset(type: 'speed' | 'balanced' | 'ultra' | 'lossless' | 'hdUpscale') {
@@ -87,16 +122,15 @@ export class CompressionStore {
       this.enhanceHd.set(true);
     }
 
-    if (this.selectedFile()) {
+    if (this.mode() === 'single' && this.selectedFile()) {
       this.compress();
+    } else if (this.mode() === 'batch' && this.batchFiles().length > 0) {
+      this.compressBatch();
     }
   }
 
-  compress() {
-    const file = this.selectedFile();
-    if (!file) return;
-
-    const options: CompressionOptions = {
+  private buildOptions(): CompressionOptions {
+    return {
       quality: this.quality(),
       format: this.targetFormat(),
       maxWidth: this.maxWidth() || undefined,
@@ -107,6 +141,13 @@ export class CompressionStore {
       enhanceHd: this.enhanceHd(),
       sharpen: this.sharpen()
     };
+  }
+
+  compress() {
+    const file = this.selectedFile();
+    if (!file) return;
+
+    const options = this.buildOptions();
 
     this.isCompressing.set(true);
     this.api.compressImage(file, options).subscribe({
@@ -120,6 +161,25 @@ export class CompressionStore {
       },
       error: () => {
         this.isCompressing.set(false);
+      }
+    });
+  }
+
+  compressBatch() {
+    const files = this.batchFiles();
+    if (files.length === 0) return;
+
+    const options = this.buildOptions();
+
+    this.isBatchCompressing.set(true);
+    this.api.compressBatch(files, options).subscribe({
+      next: results => {
+        this.isBatchCompressing.set(false);
+        this.batchResults.set(results);
+        this.loadAnalytics();
+      },
+      error: () => {
+        this.isBatchCompressing.set(false);
       }
     });
   }

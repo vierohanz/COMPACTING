@@ -31,8 +31,8 @@ public class AnalyticsService : IAnalyticsService
         CancellationToken cancellationToken = default
     )
     {
-        var logsQuery = _dbContext.CompressionLogs.AsQueryable();
-        var keysQuery = _dbContext.ApiKeys.AsQueryable();
+        var logsQuery = _dbContext.CompressionLogs.AsNoTracking();
+        var keysQuery = _dbContext.ApiKeys.AsNoTracking();
 
         if (userId.HasValue)
         {
@@ -40,13 +40,27 @@ public class AnalyticsService : IAnalyticsService
             keysQuery = keysQuery.Where(k => k.UserId == userId.Value);
         }
 
-        long totalImages = await logsQuery.LongCountAsync(cancellationToken);
-        long activeKeys = await keysQuery.LongCountAsync(
+        var activeKeysTask = keysQuery.LongCountAsync(
             k => !k.IsRevoked,
             cancellationToken
         );
 
-        if (totalImages == 0)
+        var stats = await logsQuery
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                TotalImages = g.LongCount(),
+                TotalOriginalBytes = g.Sum(l => l.OriginalSizeBytes),
+                TotalCompressedBytes = g.Sum(l => l.CompressedSizeBytes),
+                TotalBytesSaved = g.Sum(l => l.BytesSaved),
+                AvgSavingsPercent = g.Average(l => l.CompressionRatioPercent),
+                AvgDuration = g.Average(l => (double)l.DurationMs),
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        long activeKeys = await activeKeysTask;
+
+        if (stats == null || stats.TotalImages == 0)
         {
             return new AnalyticsSummaryDto(
                 TotalImagesCompressed: 0,
@@ -59,34 +73,13 @@ public class AnalyticsService : IAnalyticsService
             );
         }
 
-        long totalOriginalBytes = await logsQuery.SumAsync(
-            l => l.OriginalSizeBytes,
-            cancellationToken
-        );
-        long totalCompressedBytes = await logsQuery.SumAsync(
-            l => l.CompressedSizeBytes,
-            cancellationToken
-        );
-        long totalBytesSaved = await logsQuery.SumAsync(
-            l => l.BytesSaved,
-            cancellationToken
-        );
-        double avgSavingsPercent = await logsQuery.AverageAsync(
-            l => l.CompressionRatioPercent,
-            cancellationToken
-        );
-        double avgDuration = await logsQuery.AverageAsync(
-            l => l.DurationMs,
-            cancellationToken
-        );
-
         return new AnalyticsSummaryDto(
-            TotalImagesCompressed: totalImages,
-            TotalOriginalBytes: totalOriginalBytes,
-            TotalCompressedBytes: totalCompressedBytes,
-            TotalBytesSaved: totalBytesSaved,
-            AverageSavingsPercentage: Math.Round(avgSavingsPercent, 2),
-            AverageDurationMs: Math.Round(avgDuration, 1),
+            TotalImagesCompressed: stats.TotalImages,
+            TotalOriginalBytes: stats.TotalOriginalBytes,
+            TotalCompressedBytes: stats.TotalCompressedBytes,
+            TotalBytesSaved: stats.TotalBytesSaved,
+            AverageSavingsPercentage: Math.Round(stats.AvgSavingsPercent, 2),
+            AverageDurationMs: Math.Round(stats.AvgDuration, 1),
             TotalActiveApiKeys: activeKeys
         );
     }
@@ -97,7 +90,7 @@ public class AnalyticsService : IAnalyticsService
         CancellationToken cancellationToken = default
     )
     {
-        var query = _dbContext.CompressionLogs.AsQueryable();
+        var query = _dbContext.CompressionLogs.AsNoTracking();
         if (userId.HasValue)
         {
             query = query.Where(l => l.UserId == userId.Value);
@@ -106,9 +99,7 @@ public class AnalyticsService : IAnalyticsService
         var logs = await query
             .OrderByDescending(l => l.CreatedAt)
             .Take(limit)
-            .ToListAsync(cancellationToken);
-
-        return logs.Select(l => new RecentCompressionItemDto(
+            .Select(l => new RecentCompressionItemDto(
                 l.Id,
                 l.OriginalFileName,
                 l.SourceFormat,
@@ -120,7 +111,9 @@ public class AnalyticsService : IAnalyticsService
                 l.DurationMs,
                 l.CreatedAt
             ))
-            .ToList();
+            .ToListAsync(cancellationToken);
+
+        return logs;
     }
 
     public async Task<List<FormatBreakdownDto>> GetFormatBreakdownAsync(
@@ -128,7 +121,7 @@ public class AnalyticsService : IAnalyticsService
         CancellationToken cancellationToken = default
     )
     {
-        var query = _dbContext.CompressionLogs.AsQueryable();
+        var query = _dbContext.CompressionLogs.AsNoTracking();
         if (userId.HasValue)
         {
             query = query.Where(l => l.UserId == userId.Value);
