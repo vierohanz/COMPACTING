@@ -28,8 +28,9 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 
 EXPOSE 80
+EXPOSE 8080
 EXPOSE 5126
-ENV ASPNETCORE_URLS=http://+:80;http://+:5126
+ENV ASPNETCORE_URLS=http://+:80;http://+:8080;http://+:5126
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Copy published .NET 8 backend binary

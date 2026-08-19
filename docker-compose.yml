@@ -13,7 +13,7 @@ services:
         required: false
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
-      - ASPNETCORE_URLS=${ASPNETCORE_URLS:-http://+:80;http://+:5126}
+      - ASPNETCORE_URLS=${ASPNETCORE_URLS:-http://+:80;http://+:8080;http://+:5126}
       - ConnectionStrings__DefaultConnection=${ConnectionStrings__DefaultConnection:-Host=postgres;Port=5432;Database=compacting;Username=postgres;Password=compacting_secret;}
       - Dragonfly__Endpoint=${Dragonfly__Endpoint:-dragonfly:6379}
       - Dragonfly__Password=${Dragonfly__Password:-}
