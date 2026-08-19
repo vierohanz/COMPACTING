@@ -88,7 +88,6 @@ C:\laragon\www\COMPACTING\apps\api\bin\Debug\net8.0\SixLabors.ImageSharp.dll
 C:\laragon\www\COMPACTING\apps\api\bin\Debug\net8.0\Swashbuckle.AspNetCore.Swagger.dll
 C:\laragon\www\COMPACTING\apps\api\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerGen.dll
 C:\laragon\www\COMPACTING\apps\api\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerUI.dll
-C:\laragon\www\COMPACTING\apps\api\bin\Debug\net8.0\System.IO.Hashing.dll
 C:\laragon\www\COMPACTING\apps\api\obj\Debug\net8.0\api.csproj.AssemblyReference.cache
 C:\laragon\www\COMPACTING\apps\api\obj\Debug\net8.0\api.GeneratedMSBuildEditorConfig.editorconfig
 C:\laragon\www\COMPACTING\apps\api\obj\Debug\net8.0\api.AssemblyInfoInputs.cache

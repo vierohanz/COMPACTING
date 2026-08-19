@@ -12,7 +12,7 @@
           "Microsoft.EntityFrameworkCore.Design": "8.0.11",
           "Microsoft.EntityFrameworkCore.Tools": "8.0.11",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "8.0.11",
-          "SixLabors.ImageSharp": "4.1.0",
+          "SixLabors.ImageSharp": "3.1.9",
           "StackExchange.Redis": "2.8.24",
           "Swashbuckle.AspNetCore": "6.9.0"
         },
@@ -533,14 +533,11 @@
           }
         }
       },
-      "SixLabors.ImageSharp/4.1.0": {
-        "dependencies": {
-          "System.IO.Hashing": "8.0.0"
-        },
+      "SixLabors.ImageSharp/3.1.9": {
         "runtime": {
-          "lib/net8.0/SixLabors.ImageSharp.dll": {
-            "assemblyVersion": "4.0.0.0",
-            "fileVersion": "4.1.0.0"
+          "lib/net6.0/SixLabors.ImageSharp.dll": {
+            "assemblyVersion": "3.0.0.0",
+            "fileVersion": "3.1.9.0"
           }
         }
       },
@@ -676,14 +673,6 @@
           "lib/net8.0/System.IdentityModel.Tokens.Jwt.dll": {
             "assemblyVersion": "7.1.2.0",
             "fileVersion": "7.1.2.41121"
-          }
-        }
-      },
-      "System.IO.Hashing/8.0.0": {
-        "runtime": {
-          "lib/net8.0/System.IO.Hashing.dll": {
-            "assemblyVersion": "8.0.0.0",
-            "fileVersion": "8.0.23.53103"
           }
         }
       },
@@ -960,12 +949,12 @@
       "path": "pipelines.sockets.unofficial/2.2.8",
       "hashPath": "pipelines.sockets.unofficial.2.2.8.nupkg.sha512"
     },
-    "SixLabors.ImageSharp/4.1.0": {
+    "SixLabors.ImageSharp/3.1.9": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-7PfVxHQsa77VmO+ZcnkrcwsjZHs4ZIdAYkjKesf71glMlrAwKjjSh5Nz5F5rwfVEOF5eAh/F7k6Fel8CK3V1YA==",
-      "path": "sixlabors.imagesharp/4.1.0",
-      "hashPath": "sixlabors.imagesharp.4.1.0.nupkg.sha512"
+      "sha512": "sha512-8yY4Bcxgw5u7xLWFXb2mK4fbX+0JYJ7eyM19n0inj/cgcHAuIAge982Eiy8vTHT9Zow4HvKJaZKRFBhTNFqD4A==",
+      "path": "sixlabors.imagesharp/3.1.9",
+      "hashPath": "sixlabors.imagesharp.3.1.9.nupkg.sha512"
     },
     "StackExchange.Redis/2.8.24": {
       "type": "package",
@@ -1064,13 +1053,6 @@
       "sha512": "sha512-Thhbe1peAmtSBFaV/ohtykXiZSOkx59Da44hvtWfIMFofDA3M3LaVyjstACf2rKGn4dEDR2cUpRAZ0Xs/zB+7Q==",
       "path": "system.identitymodel.tokens.jwt/7.1.2",
       "hashPath": "system.identitymodel.tokens.jwt.7.1.2.nupkg.sha512"
-    },
-    "System.IO.Hashing/8.0.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-ne1843evDugl0md7Fjzy6QjJrzsjh46ZKbhf8GwBXb5f/gw97J4bxMs0NQKifDuThh/f0bZ0e62NPl1jzTuRqA==",
-      "path": "system.io.hashing/8.0.0",
-      "hashPath": "system.io.hashing.8.0.0.nupkg.sha512"
     },
     "System.IO.Pipelines/6.0.3": {
       "type": "package",
